@@ -4,8 +4,10 @@ import { useAtom } from "jotai";
 import React from 'react';
 import gun from '../libs/gun';
 import { aliasAtom, threadIdAtom } from "../libs/jotaiAtoms";
-const dayjs = require('dayjs');
 
+// Keys must be unique per post: unix-seconds collide when two posts land
+// in the same second, silently overwriting each other.
+const postKey = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const AddPost = () => {
   const [value, setValue] = React.useState('');
@@ -26,9 +28,9 @@ const AddPost = () => {
     if (!value) return;
 
     if (alias) {
-      gun.user().get(path).put({ [dayjs().unix()]: value });
+      gun.user().get(path).put({ [postKey()]: value });
     } else {
-      gun.get(path).put({ [dayjs().unix()]: value });
+      gun.get(path).put({ [postKey()]: value });
     }
 
     setValue('');
