@@ -1,26 +1,58 @@
-# 🔫rushgun
+# 🔫 rushgun
 
-How complicated can this simple app be or manifest?
+**rush the secret** — drop anonymous text secrets into a decentralized database,
+or tuck them behind a secret token (and optionally a password).
 
-Text data are stored in decentralized database using [Gun.js](gun.eco) in 3 levels
-1. public landing page
-2. a specific secret page identified by token (Green Right Arrow)
-3. secret token with corresponding password for the one and only holy page (Purple Right Arrow)
+Live demo: [rushgun.vercel.app](https://rushgun.vercel.app)
 
-## Getting Started
+## How it works
 
-Run the development server
+Text data is stored with [Gun.js](https://gun.eco), a decentralized graph
+database, in 3 levels:
+
+1. **Public landing page** — anything goes, visible to everyone.
+2. **A secret page** — type a `secret token` and hit the green arrow
+   (or visit `/your-token`) to open a thread only people with the token can find.
+3. **A password-protected holy page** — type a `secret token` + a `password`
+   (8+ chars) and hit the purple arrow. First login creates the account;
+   `u/your-alias` shows your own private page. Press `Esc` to leave a thread.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-## For production
+## Configuration
 
-Fork [gun relay server](https://github.com/amark/gun#deploy)
+By default the app syncs through a few community Gun relays. Point it at your
+own relay(s) instead:
 
-Deploy to [Heroku](https://heroku.com/deploy?template=https://github.com/amark/gun)
+```bash
+# .env.local
+NEXT_PUBLIC_GUN_PEERS=https://your-relay.example.com/gun
+```
+
+(Comma-separated for multiple relays — Gun's mesh uses whichever are reachable.)
+
+## Self-hosting a relay
+
+The original Heroku relay is long gone. To run your own:
+
+1. Fork/clone [gun](https://github.com/amark/gun) and deploy it (Render,
+   Railway, Fly.io, or any Node host — it just needs `node server.js`).
+2. Set `NEXT_PUBLIC_GUN_PEERS` to `https://your-relay/gun`.
+
+## Tech
+
+- [Next.js](https://nextjs.org) 14 + React 18
+- [Chakra UI](https://chakra-ui.com) for components
+- [Gun.js](https://gun.eco) (+ SEA for user auth) for decentralized storage
+- [Jotai](https://jotai.org) for state
+
+## License
+
+MIT — see [LICENSE](LICENSE).
