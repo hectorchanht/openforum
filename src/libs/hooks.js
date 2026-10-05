@@ -2,7 +2,7 @@ import React from 'react';
 
 export const useFocus = () => {
   const htmlElRef = React.useRef(null)
-  const setFocus = () => {htmlElRef.current &&  htmlElRef.current.focus()}
+  const setFocus = React.useCallback(() => { htmlElRef.current && htmlElRef.current.focus() }, [])
 
-  return [ htmlElRef, setFocus ] 
+  return [htmlElRef, setFocus]
 }

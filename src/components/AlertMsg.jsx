@@ -3,10 +3,10 @@ import React from "react";
 
 const AlertMsg = ({ msg, setMsg }) => {
   React.useEffect(() => {
-    if (msg && msg.length) {
-      setTimeout(() => setMsg(''), 3000);
-    }
-  }, [msg]);
+    if (!msg || !msg.length) return;
+    const timer = setTimeout(() => setMsg(''), 3000);
+    return () => clearTimeout(timer);
+  }, [msg, setMsg]);
 
   if (!msg) return null;
 

@@ -19,11 +19,15 @@ const Header = () => {
   const [{ username, password }, setUser] = React.useState(defaultUser);
   const [usernameRef, setInputUsernameFocus] = useFocus()
 
+  React.useEffect(() => {
+    setInputUsernameFocus();
+  }, [setInputUsernameFocus]);
+
   const setThread = () => setThreadIdAtom(username.replace(/ /g, ''));
-  const exitThread = () => {
+  const exitThread = React.useCallback(() => {
     setThreadIdAtom('');
     setUser(d => ({ ...d, username: '' }));
-  };
+  }, [setThreadIdAtom]);
 
   React.useEffect(() => {
     function handleKeyDown(e) {
@@ -37,7 +41,7 @@ const Header = () => {
     return function cleanup() {
       document.removeEventListener('keydown', handleKeyDown);
     }
-  }, []);
+  }, [exitThread]);
 
   React.useEffect(() => {
     const secret = router.asPath.slice(1);
@@ -45,7 +49,7 @@ const Header = () => {
     if (secret) {
       setThreadIdAtom(secret);
     }
-  }, [router.asPath]);
+  }, [router.asPath, setThreadIdAtom]);
 
   const setUsername = (e) => setUser((d) => ({ ...d, username: e.target.value }));
   const setPassword = (e) => setUser((d) => ({ ...d, password: e.target.value }));
