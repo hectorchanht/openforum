@@ -246,7 +246,7 @@ const RoomHeader = () => {
 
   // Vote budget: spent count derived honestly from the graph (v/<postKey>
   // entries containing our voter id), not a local counter.
-  const voteBudget = meta.voteBudget; // 0 = unlimited; missing → 5 (parsed)
+  const voteBudget = meta ? meta.voteBudget : 5; // 0 = unlimited; missing → 5 (parsed)
   const myId = getVoterId();
   const spentVotes = React.useMemo(() => {
     let n = 0;
