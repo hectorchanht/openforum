@@ -133,8 +133,13 @@ const ThoughtHeapButton = () => {
 
   const promote = (item) => {
     // Fill the composer as a DRAFT — never auto-post, let him edit first.
+    // Never yank the user out of their current room: if they're in a room,
+    // the question is drafted HERE regardless of where the thought was
+    // parked (a lobby-parked thought used to dump them back to the home
+    // page — that was the bug). Only navigate when on the home page and
+    // the item belongs to a room.
     const target = item.room === 'lobby' ? '' : item.room;
-    if (target !== thread) setThreadIdAtom(target); // navigate if needed
+    if (!thread && target) setThreadIdAtom(target);
     setHeapDraft({ text: item.text });
     onClose();
   };
