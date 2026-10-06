@@ -88,6 +88,29 @@ const Header = () => {
     onClick={toggleColorMode}
   />;
 
+  // Green dot = connected to the Gun relay (posts sync to others live).
+  // Red dot = no relay connection (posts stay on this device only).
+  const RelayStatus = () => {
+    const [online, setOnline] = React.useState(false);
+    React.useEffect(() => {
+      let n = 0;
+      gun.on('hi', () => { n += 1; setOnline(n > 0); });
+      gun.on('bye', () => { n = Math.max(0, n - 1); setOnline(n > 0); });
+    }, []);
+    return (
+      <Box
+        title={online
+          ? 'relay connected — posts sync to others live'
+          : 'relay disconnected — posts stay on this device only'}
+        aria-label="relay connection status"
+        display="flex" alignItems="center" px={1}
+      >
+        <Box as="span" display="inline-block" w="10px" h="10px" borderRadius="full"
+          bg={online ? 'green.400' : 'red.500'} />
+      </Box>
+    );
+  };
+
   const IsLogin = () => {
     const logout = () => {
       gun.user().leave();
@@ -112,6 +135,7 @@ const Header = () => {
       <HStack p={2} borderRadius={8} boxShadow="lg" spacing={'4px'} justifyContent={"space-between"}>
         {/* <Image src={"/gun-logo.png"} alt={"logo"} height={"38px"} width={"38px"} /> */}
 
+        <RelayStatus />
         <ToggleColor />
 
         {
