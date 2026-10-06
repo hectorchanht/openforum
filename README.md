@@ -75,6 +75,29 @@ Threads double as live Q&A rooms:
   render threaded under the question card for everyone, with a HOST badge. One
   level only (no nested replies). Stored at `t/<thread>/r/<postKey>/<replyKey>`,
   host-only writes (client-enforced, same trust model as pin/delete).
+- **Audience replies (threaded discussion)** — anyone can reply to a question,
+  not just the host: tap Reply, join the discussion. Replies collapse under a
+  "💬 N replies" toggle; host replies keep the HOST badge, audience replies show
+  the author's pseudonym avatar (your own show "you"). The host can delete any
+  reply; authors can delete their own. New replies are stored as
+  `t/<thread>/r/<postKey>/<replyKey>` = `{text, by}` (legacy plain-text replies
+  from the host-only era render as HOST). Slow mode applies to replies too.
+  Client-enforced — and replies post directly (they don't go through the
+  pre-moderation queue).
+- **📊 Live polls** — the host launches single-choice polls (question + 2–6
+  options) from the room header. Poll defs live at `t/<thread>/polls/<pollId>` =
+  `{q, options, by, createdAt, closed}`; votes at
+  `t/<thread>/polls/<pollId>/votes/<voterId>` = option index — one vote per
+  browser, changeable while the poll is open. The audience sees animated result
+  bars with counts and %, plus a "✓ you voted" state. The host can close (freeze
+  results) / reopen / delete a poll. Polls render in a collapsible section above
+  the question list and are included in the CSV export. Client-enforced.
+- **🗳️ Vote budget** — each browser gets a vote budget per room: default 5, the
+  host can set 1–10 or Unlimited (`meta.voteBudget`; missing = 5). Upvoting
+  spends one, retracting refunds one. The header shows "🗳️ N votes left"; at zero
+  the ▲ buttons disable with a hint to retract a vote. The spent count is derived
+  honestly from the graph — `t/<thread>/v/<postKey>` entries containing your
+  voter id — not a localStorage counter. Client-enforced.
 - **Host key / co-hosts** — the host id lives in `localStorage` (`rg_host_<thread>`),
   so clearing site data orphans the room. The room header's **🔑 Host key** panel
   shows the key with a copy button: save it, enter it on another device to regain
@@ -127,9 +150,9 @@ rooms created by older versions keep working, they just don't have the new field
 > this.
 >
 > **Client-enforced caveat:** Gun has no server-side TTL or auth, so expiry,
-> close, slow mode, hiding, muting, flagging, pre-moderation, merging, and host
-> replies are UX features enforced by each client — a modified client could still
-> read/write. The host key is a shared secret, not cryptographic auth: anyone who
+> close, slow mode, hiding, muting, flagging, pre-moderation, merging, replies
+> (host and audience), live polls, and vote budget are UX features enforced by
+> each client — a modified client could still read/write. The host key is a shared secret, not cryptographic auth: anyone who
 > can write to the graph can overwrite `meta.hostId` (last-writer-wins) and seize
 > host. Treat all of it as moderation conveniences, not a security boundary.
 

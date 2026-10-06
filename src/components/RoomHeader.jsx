@@ -20,11 +20,13 @@ import { avatarFor, downloadCSV, fmtCountdown, pseudonym, timeAgo } from "../lib
 import {
   approvePending,
   countKeys,
+  getVoterId,
   rejectPending,
   setMutedAuthor,
   useAuthors,
   useNewQuestionNotify,
   usePending,
+  usePolls,
   usePosts,
   usePostStatus,
   useThreadMeta,
@@ -39,6 +41,7 @@ import {
   threadIdAtom,
 } from "../libs/jotaiAtoms";
 import ShareQR from "./ShareQR";
+import { PollCreateModal } from "./PollsSection";
 
 const SLOW_OPTIONS = [
   { label: 'Off', sec: 0 },
@@ -197,6 +200,7 @@ const RoomHeader = () => {
   const authors = useAuthors(thread);
   const pending = usePending(thread);
   const notify = useNewQuestionNotify(thread);
+  const polls = usePolls(thread);
   const toast = useToast();
 
   const [editing, setEditing] = React.useState(false);
@@ -207,6 +211,7 @@ const RoomHeader = () => {
   const [claimDraft, setClaimDraft] = React.useState('');
   const [copied, setCopied] = React.useState(false);
   const [pendingOpen, setPendingOpen] = React.useState(false);
+  const [pollOpen, setPollOpen] = React.useState(false);
   const [, force] = React.useReducer((x) => x + 1, 0);
 
   // re-render the countdown text
@@ -239,6 +244,20 @@ const RoomHeader = () => {
     };
   }, [posts, votes, authors]);
 
+  // Vote budget: spent count derived honestly from the graph (v/<postKey>
+  // entries containing our voter id), not a local counter.
+  const voteBudget = meta.voteBudget; // 0 = unlimited; missing → 5 (parsed)
+  const myId = getVoterId();
+  const spentVotes = React.useMemo(() => {
+    let n = 0;
+    Object.entries(votes || {}).forEach(([k, o]) => {
+      if (k === '_' || !o || typeof o !== 'object') return;
+      if (o[myId]) n++;
+    });
+    return n;
+  }, [votes, myId]);
+  const votesLeft = voteBudget > 0 ? Math.max(0, voteBudget - spentVotes) : null;
+
   if (!thread || !meta) return null;
 
   const openPresent = () => {
@@ -269,6 +288,25 @@ const RoomHeader = () => {
         ];
       }),
     ];
+    if (polls.length > 0) {
+      rows.push([]);
+      rows.push(['POLLS']);
+      rows.push(['poll', 'option', 'votes', 'percent', 'status', 'created_at']);
+      polls.forEach((p) => {
+        const pts = Number(p.createdAt);
+        p.options.forEach((opt, i) => {
+          const c = p.counts[i] || 0;
+          rows.push([
+            p.q,
+            opt,
+            String(c),
+            p.total > 0 ? `${Math.round((c / p.total) * 100)}%` : '0%',
+            p.closed ? 'closed' : 'open',
+            !pts || Number.isNaN(pts) ? '' : new Date(pts).toISOString(),
+          ]);
+        });
+      });
+    }
     downloadCSV(`openforum-${thread}-export.csv`, rows);
     toast({ title: 'CSV exported', status: 'success', duration: 1500, isClosable: true });
   };
@@ -401,6 +439,15 @@ const RoomHeader = () => {
           {meta.moderated && (
             <Badge fontSize="xs" px={2} py={1} colorScheme="orange">🛡 questions reviewed by host</Badge>
           )}
+          {voteBudget > 0 ? (
+            <Tooltip label={votesLeft <= 0 ? 'Retract an upvote to get a vote back' : 'Upvoting spends one — retracting refunds it'}>
+              <Badge fontSize="xs" px={2} py={1} colorScheme={votesLeft <= 0 ? 'red' : 'teal'}>
+                🗳️ {votesLeft} vote{votesLeft !== 1 ? 's' : ''} left
+              </Badge>
+            </Tooltip>
+          ) : (
+            <Badge fontSize="xs" px={2} py={1} colorScheme="gray">🗳️ unlimited votes</Badge>
+          )}
         </HStack>
 
         {/* Search / sort / filter */}
@@ -473,6 +520,11 @@ const RoomHeader = () => {
               >
                 🔑 Host key
               </Button>
+              <Tooltip label="Create a live single-choice poll for the audience">
+                <Button size="sm" variant="outline" onClick={() => setPollOpen(true)}>
+                  📊 New poll
+                </Button>
+              </Tooltip>
             </>
           )}
           {!isHost && (
@@ -496,6 +548,19 @@ const RoomHeader = () => {
                   <option key={o.sec} value={o.sec}>🐢 {o.label}</option>
                 ))}
               </Select>
+              <Tooltip label="How many upvotes each person gets in this room — retracting a vote refunds it">
+                <Select
+                  value={voteBudget}
+                  onChange={(e) => updateMeta({ voteBudget: Number(e.target.value) })}
+                  maxW="150px"
+                  aria-label="vote budget per person"
+                >
+                  <option value={0}>🗳️ Unlimited</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                    <option key={n} value={n}>🗳️ {n} vote{n !== 1 ? 's' : ''} each</option>
+                  ))}
+                </Select>
+              </Tooltip>
               <Button
                 size="sm"
                 variant="outline"
@@ -624,6 +689,13 @@ const RoomHeader = () => {
             mutedMap={meta.mutedAuthors || {}}
           />
         )}
+
+        {/* Poll creation modal (host) */}
+        <PollCreateModal
+          isOpen={pollOpen}
+          onClose={() => setPollOpen(false)}
+          thread={thread}
+        />
       </VStack>
     </Box>
   );

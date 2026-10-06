@@ -6,6 +6,7 @@ import React from 'react';
 import AddPost from '../components/AddPost';
 import Layout from '../components/layout/Layout';
 import Logo from '../components/Logo';
+import PollsSection from '../components/PollsSection';
 import PostList from '../components/PostList';
 import PresentView from '../components/PresentView';
 import RoomHeader from '../components/RoomHeader';
@@ -134,6 +135,7 @@ export default function Home() {
               Public board — anyone can post
             </Text>
           )}
+          {thread && <PollsSection />}
           <PostList />
           {/* spacer so the fixed composer never covers the last question */}
           {thread && <Box h="130px" />}

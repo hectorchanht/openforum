@@ -113,6 +113,8 @@ export const useThreadMeta = (thread) => {
             slowModeSec: d.slowModeSec || 0,
             moderated: !!d.moderated,
             mutedAuthors: parseMutedAuthors(d),
+            // vote budget per browser: 0 = unlimited, undefined = default 5
+            voteBudget: d.voteBudget == null ? 5 : d.voteBudget,
           }
         : null);
     });
@@ -172,11 +174,11 @@ export const setMutedAuthor = (thread, voterId, muted) => {
 
 // ---- Posts / votes / status / authors ----
 
-// 'meta', 'v', 'st', 'a', 'p', 'r' are sub-nodes of a thread (host meta, vote
-// tallies, post status, author ids, moderation-pending posts, host replies) —
-// they show up in the parent's .on() data but are not posts. Adding 'p'/'r'
-// keeps old + new threads both working.
-const SKIP_KEYS = new Set(['_', 'meta', 'v', 'st', 'a', 'p', 'r']);
+// 'meta', 'v', 'st', 'a', 'p', 'r', 'polls' are sub-nodes of a thread (host
+// meta, vote tallies, post status, author ids, moderation-pending posts,
+// replies, live polls) — they show up in the parent's .on() data but are not
+// posts. Adding 'p'/'r'/'polls' keeps old + new threads both working.
+const SKIP_KEYS = new Set(['_', 'meta', 'v', 'st', 'a', 'p', 'r', 'polls']);
 
 const parsePosts = (d) =>
   d && Object.entries(d)
@@ -384,10 +386,13 @@ export const rejectPending = (thread, key) => {
   gun.get(`t/${thread}/a`).get(key).put(null);
 };
 
-// ---- Host replies (visible answers) ----
+// ---- Replies (threaded discussion) ----
 
-// Replies live at t/<thread>/r/<postKey>/<replyKey> = text (one level only).
-// Host-only writes, client-enforced like all host controls.
+// Replies live at t/<thread>/r/<postKey>/<replyKey> (one level only).
+// Two shapes exist: legacy plain-string replies (host-only era — always
+// rendered with a HOST badge) and {text, by} objects (by = hostId for host
+// replies, voterId for audience replies). Writes are client-enforced like
+// all host controls.
 export const useReplies = (thread) => {
   const [replies, setReplies] = React.useState({});
   React.useEffect(() => {
@@ -400,7 +405,14 @@ export const useReplies = (thread) => {
         Object.entries(d).forEach(([pk, rv]) => {
           if (pk === '_' || !rv || typeof rv !== 'object') return;
           const list = Object.entries(rv)
-            .map(([rk, text]) => (rk === '_' ? null : { key: rk, text }))
+            .map(([rk, v]) => {
+              if (rk === '_') return null;
+              if (typeof v === 'string') return { key: rk, text: v, by: null }; // legacy: host
+              if (v && typeof v === 'object' && typeof v.text === 'string') {
+                return { key: rk, text: v.text, by: v.by || null };
+              }
+              return null;
+            })
             .filter(Boolean)
             .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
           if (list.length) out[pk] = list;
@@ -413,9 +425,9 @@ export const useReplies = (thread) => {
   return replies;
 };
 
-export const addReply = (thread, postKey, replyKey, text) => {
+export const addReply = (thread, postKey, replyKey, text, authorId) => {
   if (!thread || !postKey || !replyKey || !text) return;
-  gun.get(`t/${thread}/r`).get(postKey).put({ [replyKey]: text });
+  gun.get(`t/${thread}/r`).get(postKey).put({ [replyKey]: { text, by: authorId || null } });
 };
 
 export const deleteReply = (thread, postKey, replyKey) => {
@@ -436,4 +448,118 @@ export const mergeInto = (thread, sourceKey, targetKey) => {
 export const unmerge = (thread, sourceKey) => {
   if (!thread || !sourceKey) return;
   gun.get(`t/${thread}/st`).get(sourceKey).get('mergedInto').put(null);
+};
+
+// ---- Live polls ----
+
+// Poll defs live at t/<thread>/polls/<pollId> =
+//   {q, options: {0: "a", 1: "b"}, by, createdAt, closed}.
+// Votes live at t/<thread>/polls/<pollId>/votes/<voterId> = optionIndex
+// (one vote per browser, changeable while the poll is open).
+// Client-enforced like all host controls: host-only creation is a UI
+// convention, and a closed poll only disables voting in this client.
+export const createPoll = (thread, pollId, { q, options, by }) => {
+  if (!thread || !pollId || !q || !options || options.length < 2) return;
+  const opts = {};
+  options.slice(0, 6).forEach((o, i) => { opts[i] = o; });
+  gun.get(`t/${thread}/polls`).put({
+    [pollId]: { q, options: opts, by: by || null, createdAt: Date.now(), closed: false },
+  });
+};
+
+export const votePoll = (thread, pollId, idx) => {
+  if (!thread || !pollId || idx == null) return;
+  gun.get(`t/${thread}/polls`).get(pollId).get('votes').put({ [getVoterId()]: idx });
+};
+
+export const setPollClosed = (thread, pollId, closed) => {
+  if (!thread || !pollId) return;
+  gun.get(`t/${thread}/polls`).get(pollId).put({ closed: !!closed });
+};
+
+export const deletePoll = (thread, pollId) => {
+  if (!thread || !pollId) return;
+  gun.get(`t/${thread}/polls`).get(pollId).put(null);
+};
+
+const parsePollOptions = (o) => {
+  if (!o || typeof o !== 'object') return [];
+  return Object.entries(o)
+    .filter(([k]) => k !== '_')
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([, v]) => String(v ?? ''));
+};
+
+// Subscribes to poll defs + each poll's votes node.
+// Returns [{id, q, options[], by, createdAt, closed, counts[], total, myVote}].
+export const usePolls = (thread) => {
+  const [defs, setDefs] = React.useState({});
+  const [votes, setVotes] = React.useState({});
+
+  React.useEffect(() => {
+    setDefs({});
+    if (!thread) return;
+    const node = gun.get(`t/${thread}/polls`);
+    node.on((d) => {
+      const out = {};
+      if (d) {
+        Object.entries(d).forEach(([k, v]) => {
+          if (k === '_' || !v) return;
+          out[k] = {
+            id: k,
+            q: v.q || '',
+            options: parsePollOptions(v.options),
+            by: v.by || null,
+            createdAt: v.createdAt || 0,
+            closed: !!v.closed,
+          };
+        });
+      }
+      setDefs(out);
+    });
+    return () => node.off();
+  }, [thread]);
+
+  const pollIds = Object.keys(defs).sort().join(',');
+  React.useEffect(() => {
+    setVotes({});
+    if (!thread || !pollIds) return;
+    const unsubs = pollIds.split(',').map((id) => {
+      const node = gun.get(`t/${thread}/polls`).get(id).get('votes');
+      node.on((d) => {
+        const out = {};
+        if (d) {
+          Object.entries(d).forEach(([k, v]) => {
+            if (k === '_' || v == null) return;
+            const n = Number(v);
+            if (Number.isFinite(n)) out[k] = n;
+          });
+        }
+        setVotes((prev) => ({ ...prev, [id]: out }));
+      });
+      return () => node.off();
+    });
+    return () => unsubs.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread, pollIds]);
+
+  const mine = getVoterId();
+  return React.useMemo(() => {
+    const list = Object.values(defs)
+      .map((p) => {
+        const vm = votes[p.id] || {};
+        const counts = p.options.map((_, i) =>
+          Object.values(vm).filter((v) => v === i).length
+        );
+        return {
+          ...p,
+          counts,
+          total: counts.reduce((a, b) => a + b, 0),
+          myVote: vm[mine],
+        };
+      })
+      .sort((a, b) => b.createdAt - a.createdAt);
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defs, votes]);
 };

@@ -1,8 +1,8 @@
 import { ChatIcon, CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
 import {
-  Avatar, Badge, Box, Button, HStack, IconButton, Input, Modal, ModalBody,
+  Avatar, Badge, Box, Button, Collapse, HStack, IconButton, Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Text, Textarea,
-  Tooltip, VStack,
+  Tooltip, useToast, VStack,
 } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAtom } from "jotai";
@@ -21,6 +21,7 @@ const FLAG_THRESHOLD = 3; // N audience flags auto-hide a post from non-hosts
 const QuestionCard = ({
   post, thread, meta, isHost, readOnly,
   voteCount, voted, onVote, authorId,
+  budgetExhausted, voteBudget, mineId, slowSec,
   status, flagCount, hidden,
   onToggleAnswered, onToggleHidden, onFlag, onTogglePin, onDelete, onSpotlight,
   isMine, mutedAuthor,
@@ -30,18 +31,46 @@ const QuestionCard = ({
   const pinned = !!(thread && meta && meta.pinnedKey === post.key);
   const answered = !!status?.answered;
   const spotlighted = !!(thread && meta && meta.discussingKey === post.key);
+  const hostId = meta && meta.hostId;
   const av = avatarFor(authorId);
   const name = authorId ? pseudonym(authorId) : null;
+  const toast = useToast();
+  const [threadOpen, setThreadOpen] = React.useState(false);
   const [replyOpen, setReplyOpen] = React.useState(false);
   const [replyText, setReplyText] = React.useState('');
 
   const sendReply = () => {
     const text = replyText.trim();
     if (!text) return;
-    onSendReply(post.key, uniqueKey(), text);
+    // Slow mode applies to replies too — localStorage-enforced, like questions.
+    if (slowSec > 0 && typeof window !== 'undefined') {
+      const last = Number(window.localStorage.getItem(`rg_lastreply_${thread}`) || 0);
+      const waitMs = slowSec * 1000 - (Date.now() - last);
+      if (waitMs > 0) {
+        toast({
+          title: `Slow mode is on — wait ${Math.ceil(waitMs / 1000)}s`,
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+        return;
+      }
+    }
+    onSendReply(post.key, uniqueKey(), text, isHost);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(`rg_lastreply_${thread}`, String(Date.now()));
+    }
     setReplyText('');
     setReplyOpen(false);
+    setThreadOpen(true); // reveal the thread so the reply is seen
   };
+
+  const voteDisabled = readOnly || (budgetExhausted && !voted);
+  const voteLabel = voted
+    ? 'Retract upvote'
+    : budgetExhausted
+      ? `Vote budget used up (${voteBudget} votes) — retract one to re-vote`
+      : 'Upvote this question';
 
   return (
     <MotionBox
@@ -59,7 +88,7 @@ const QuestionCard = ({
       <HStack align="flex-start" spacing={3}>
         {thread && (
           <VStack spacing={0} minW="52px" pt={1}>
-            <Tooltip label={voted ? 'Retract upvote' : 'Upvote this question'}>
+            <Tooltip label={voteLabel}>
               <IconButton
                 size="md"
                 variant={voted ? 'solid' : 'ghost'}
@@ -67,7 +96,7 @@ const QuestionCard = ({
                 aria-label={voted ? 'remove upvote' : 'upvote'}
                 icon={<TriangleUpIcon />}
                 onClick={() => onVote(post.key)}
-                isDisabled={readOnly}
+                isDisabled={voteDisabled}
                 borderRadius="xl"
               />
             </Tooltip>
@@ -138,41 +167,81 @@ const QuestionCard = ({
             {String(post.text)}
           </Text>
 
-          {/* Host replies — visible answers, threaded under the question */}
+          {/* Replies — threaded discussion, one level. Host replies get a
+              HOST badge; audience replies show the author's pseudonym avatar.
+              Legacy plain-text replies (host-only era) render as HOST. */}
           {replies && replies.length > 0 && (
-            <VStack align="stretch" spacing={1.5} pl={3} borderLeftWidth="2px" borderColor="purple.400">
-              {replies.map((r) => (
-                <HStack key={r.key} align="start" spacing={2}>
-                  <Badge colorScheme="purple" mt={1} flexShrink={0} fontSize="2xs">HOST</Badge>
-                  <Text fontSize="sm" flex={1} minW={0} wordBreak="break-word" opacity={0.95}>
-                    {String(r.text)}
-                  </Text>
-                  {isHost && (
-                    <IconButton
-                      size="xs"
-                      variant="ghost"
-                      aria-label="delete reply"
-                      icon={<DeleteIcon />}
-                      color="red.400"
-                      onClick={() => onDeleteReply(post.key, r.key)}
-                    />
-                  )}
-                </HStack>
-              ))}
-            </VStack>
+            <Box>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => setThreadOpen(!threadOpen)}
+                aria-expanded={threadOpen}
+                px={1}
+              >
+                💬 {replies.length} {replies.length === 1 ? 'reply' : 'replies'} {threadOpen ? '▾' : '▸'}
+              </Button>
+              <Collapse in={threadOpen} animateOpacity>
+                <VStack align="stretch" spacing={1.5} pl={3} mt={1} borderLeftWidth="2px" borderColor="purple.400">
+                  {replies.map((r) => {
+                    const isHostReply = !r.by || r.by === hostId;
+                    const canDelete = isHost || (r.by && r.by === mineId);
+                    const rav = !isHostReply && r.by ? avatarFor(r.by) : null;
+                    return (
+                      <HStack key={r.key} align="start" spacing={2}>
+                        {isHostReply ? (
+                          <Badge colorScheme="purple" mt={1} flexShrink={0} fontSize="2xs">HOST</Badge>
+                        ) : (
+                          <Avatar
+                            size="2xs"
+                            bg={`${rav.color}.500`}
+                            icon={<Text fontSize="xs">{rav.emoji}</Text>}
+                            mt={0.5}
+                            flexShrink={0}
+                            title={pseudonym(r.by)}
+                          />
+                        )}
+                        <VStack align="start" spacing={0} flex={1} minW={0}>
+                          {!isHostReply && (
+                            <Text fontSize="2xs" fontWeight="semibold" color={`${rav.color}.300`}>
+                              {r.by === mineId ? 'you' : pseudonym(r.by)}
+                            </Text>
+                          )}
+                          <Text fontSize="sm" wordBreak="break-word" opacity={0.95}>
+                            {String(r.text)}
+                          </Text>
+                        </VStack>
+                        {canDelete && (
+                          <IconButton
+                            size="xs"
+                            variant="ghost"
+                            aria-label="delete reply"
+                            icon={<DeleteIcon />}
+                            color="red.400"
+                            flexShrink={0}
+                            onClick={() => onDeleteReply(post.key, r)}
+                          />
+                        )}
+                      </HStack>
+                    );
+                  })}
+                </VStack>
+              </Collapse>
+            </Box>
           )}
 
           {thread && (
             <HStack spacing={1} flexWrap="wrap">
-              {isHost && !readOnly && (
+              {!readOnly && (
                 replyOpen ? (
                   <HStack align="flex-end" w="100%" spacing={2} mt={1}>
                     <Textarea
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Write a reply as host… (Enter to send)"
+                      placeholder={isHost ? "Write a reply as host… (Enter to send)" : "Join the discussion… (Enter to send)"}
                       rows={2}
                       fontSize="sm"
+                      minW={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -200,7 +269,7 @@ const QuestionCard = ({
                     </VStack>
                   </HStack>
                 ) : (
-                  <Tooltip label="Reply as host — visible to everyone">
+                  <Tooltip label={isHost ? "Reply as host — visible to everyone" : "Reply — join the discussion"}>
                     <Button
                       size="xs"
                       variant="ghost"
@@ -405,6 +474,23 @@ const PostList = () => {
   const { meta, isHost, readOnly, updateMeta } = useThreadMeta(thread);
   const mine = getVoterId();
   const mutedMap = (thread && meta && meta.mutedAuthors) || {};
+  const toast = useToast();
+
+  // Vote budget: per-browser votes per room. 0 = unlimited; meta parse
+  // defaults a missing value to 5. Spent count is derived HONESTLY from the
+  // graph (v/<postKey> entries containing our voter id), not a local counter.
+  const voteBudget = meta ? meta.voteBudget : 5;
+  const budgetLimited = voteBudget > 0;
+  const spentVotes = React.useMemo(() => {
+    let n = 0;
+    Object.entries(votes || {}).forEach(([k, o]) => {
+      if (k === '_' || !o || typeof o !== 'object') return;
+      if (o[mine]) n++;
+    });
+    return n;
+  }, [votes, mine]);
+  const votesLeft = budgetLimited ? Math.max(0, voteBudget - spentVotes) : null;
+  const slowSec = thread && meta ? meta.slowModeSec || 0 : 0;
 
   // Merge dialog: { mode: 'merge', sourceKey } | { mode: 'manage', manageKey }
   const [mergeDlg, setMergeDlg] = React.useState(null);
@@ -435,11 +521,19 @@ const PostList = () => {
 
   const toggleVote = (key) => {
     if (!thread || readOnly) return;
-    const vnode = gun.get(`t/${thread}/v/${key}`);
     if (hasVoted(key)) {
-      vnode.get(getVoterId()).put(null); // retract vote
+      gun.get(`t/${thread}/v/${key}`).get(getVoterId()).put(null); // retract vote
     } else {
-      vnode.put({ [getVoterId()]: 1 });
+      if (budgetLimited && spentVotes >= voteBudget) {
+        toast({
+          title: `You've used all ${voteBudget} votes — retract one to re-vote`,
+          status: 'warning',
+          duration: 2500,
+          isClosable: true,
+        });
+        return;
+      }
+      gun.get(`t/${thread}/v/${key}`).put({ [getVoterId()]: 1 });
     }
   };
 
@@ -475,14 +569,18 @@ const PostList = () => {
     updateMeta({ discussingKey: spotlighted ? null : key });
   };
 
-  const handleSendReply = (postKey, replyKey, text) => {
-    if (!thread || !isHost || readOnly) return;
-    addReply(thread, postKey, replyKey, text);
+  const handleSendReply = (postKey, replyKey, text, asHost) => {
+    if (!thread || readOnly) return;
+    // Host replies carry the host id (HOST badge); audience replies carry
+    // the sender's voter id (pseudonym avatar).
+    addReply(thread, postKey, replyKey, text, asHost ? (meta && meta.hostId) : getVoterId());
   };
 
-  const handleDeleteReply = (postKey, replyKey) => {
-    if (!thread || !isHost) return;
-    deleteReply(thread, postKey, replyKey);
+  const handleDeleteReply = (postKey, reply) => {
+    if (!thread) return;
+    const own = reply.by && reply.by === getVoterId();
+    if (!isHost && !own) return; // host can delete any; authors their own
+    deleteReply(thread, postKey, reply.key);
   };
 
   const handlePickTarget = (targetKey) => {
@@ -622,6 +720,10 @@ const PostList = () => {
             voted={thread ? hasVoted(p.key) : false}
             onVote={toggleVote}
             authorId={p.authorId}
+            budgetExhausted={budgetLimited && votesLeft <= 0}
+            voteBudget={voteBudget}
+            mineId={mine}
+            slowSec={slowSec}
             status={status[p.key]}
             flagCount={p.flagCount}
             hidden={p.hidden}
