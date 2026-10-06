@@ -44,7 +44,7 @@ const PresentView = () => {
                 Waiting for the host to spotlight a question…
               </Text>
               <Text fontSize="md" opacity={0.7}>
-                This screen updates automatically. t/{thread}
+                This screen updates automatically. “{thread}”
               </Text>
             </VStack>
           </motion.div>

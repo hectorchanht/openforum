@@ -149,13 +149,13 @@ const PollCard = ({ thread, poll, isHost, readOnly }) => {
         {isHost && (
           <HStack spacing={1} ml="auto">
             <Tooltip label={poll.closed ? 'Reopen poll' : 'Close poll — freeze results'}>
-              <Button size="xs" variant="ghost" onClick={doCloseToggle}>
+              <Button size="sm" minH="36px" variant="ghost" onClick={doCloseToggle}>
                 {poll.closed ? 'Reopen' : 'Close'}
               </Button>
             </Tooltip>
             <Tooltip label="Delete poll">
               <IconButton
-                size="xs"
+                size="sm"
                 variant="ghost"
                 aria-label="delete poll"
                 icon={<DeleteIcon />}

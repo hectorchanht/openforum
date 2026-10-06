@@ -11,11 +11,11 @@ Text data is stored with [Gun.js](https://gun.eco), a decentralized graph
 database, in 3 levels:
 
 1. **Public landing page** — anything goes, visible to everyone.
-2. **A secret page** — type a `secret token` and hit the green arrow
-   (or visit `/your-token`) to open a room only people with the token can find.
-3. **A password-protected holy page** — type a `secret token` + a `password`
+2. **A room** — type a room name and hit the green arrow
+   (or visit `/room-name`) to join a room only people with the name can find.
+3. **A private page** — type a name + a `password`
    (8+ chars) and hit the purple arrow. First login creates the account;
-   `u/your-alias` shows your own private page. Press `Esc` to leave a thread.
+   it opens your own private page. Press `Esc` to leave a room.
 
 ## Event Q&A features
 
@@ -25,11 +25,11 @@ Threads double as live Q&A rooms:
   click again to retract. Votes are stored per post at
   `t/<thread>/v/<postKey>` as `{voterId: 1}`; your anonymous voter id lives in
   `localStorage` (`rg_vid`). Cards animate as they re-sort.
-- **Host controls** — the first visitor to a thread with no host becomes the
+- **Host controls** — the first visitor to a room with no host becomes the
   host by creating it (`t/<thread>/meta` = `{hostId, createdAt, expiresAt, closed}`).
   The host id is kept in `localStorage` (`rg_host_<thread>`). Hosts can pin one
   post to the top, delete posts (votes and status are cleared too), and close/reopen the
-  thread. All host controls are client-enforced (see caveat below).
+  room. All host controls are client-enforced (see caveat below).
 - **Mark answered** — the host taps ✓ on a question to mark it answered
   (stored at `t/<thread>/st/<postKey>` as `{answered, hidden, flags: {voterId: 1}}`).
   Answered questions get a green badge; filter tabs switch between
@@ -120,9 +120,9 @@ Threads double as live Q&A rooms:
   the target is deleted, merged sources stay hidden from the audience; the host
   still sees them flagged ("merged into a deleted question") with an Unmerge
   button, so nothing is ever permanently stuck. Client-enforced.
-- **Expiring threads** — when creating a thread, the host picks a lifetime:
-  1 hour, 24 hours, 7 days, or never. The thread view shows a live countdown.
-  Expired or closed threads are read-only (posting and voting disabled, posts
+- **Expiring rooms** — when creating a room, the host picks a lifetime:
+  1 hour, 24 hours, 7 days, or never. The room view shows a live countdown.
+  Expired or closed rooms are read-only (posting and voting disabled, posts
   still readable).
 - **🧠 Thought Heap** — a private quick-capture scratchpad. Hit the 🧠 icon in
   the header (count badge shows parked thoughts), type, Enter — the thought is

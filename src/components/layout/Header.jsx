@@ -134,22 +134,25 @@ const Header = () => {
   };
 
   const showPassword = username && username.length >= 4;
-  const holyMode = password.length >= 8;
+  // "privateMode": with an 8+ character password the arrow turns purple and
+  // opens your private page (u/alias) instead of the room. Renamed from the
+  // old "holy" terminology — user-facing copy now says "private page".
+  const privateMode = password.length >= 8;
 
   // Joined input group: room-name input with the » button attached at its
   // right end (search-bar style). The button's -1px overlap + square inner
   // corners make them read as one control; it can never wrap onto its own
   // row, which was the mobile shrink-to-fit trigger.
   const roomEntry = (
-    <VStack w="100%" spacing={2} align="stretch">
+    <VStack w="100%" spacing={1.5} align="stretch">
       <HStack spacing={0} w="100%">
         <Input
           ref={usernameRef}
           value={username}
-          placeholder="room name"
+          placeholder="Room name — e.g. town-hall"
           onChange={setUsername}
           onKeyDown={handleEnterShortSecret}
-          size="md"
+          size="lg"
           flex={1}
           minW={0}
           borderRightRadius={0}
@@ -157,27 +160,36 @@ const Header = () => {
           _focus={{ zIndex: 1 }}
         />
         <IconButton
-          aria-label={holyMode ? 'open holy page' : 'join room'}
-          title={holyMode
-            ? 'Purple arrow: password-protected holy page (u/your-alias)'
-            : 'Green arrow: join room (password empty)'}
+          aria-label={privateMode ? 'open your private page' : 'join room'}
+          title={privateMode
+            ? 'Private page: with an 8+ character password this opens your private page (u/your-name) instead of the room'
+            : 'Join room — no signup needed'}
           isDisabled={!username.length || !!alertMsg.length}
           variant="solid"
-          colorScheme={holyMode ? 'purple' : 'green'}
-          onClick={holyMode ? loginGun : setThread}
+          colorScheme={privateMode ? 'purple' : 'green'}
+          onClick={privateMode ? loginGun : setThread}
           icon={<ArrowRightIcon />}
-          size="md"
+          size="lg"
+          minW="56px"
+          minH="48px"
           borderLeftRadius={0}
           ml="-1px"
           flexShrink={0}
         />
       </HStack>
+      <Text fontSize="xs" opacity={0.6} px={1} lineHeight="1.5">
+        {privateMode ? (
+          <>🔑 <b>Private page mode</b> — the purple arrow opens <b>your private page</b> (u/{username.replace(/ /g, '') || 'your-name'}), not the room. Clear the password to join the room instead.</>
+        ) : (
+          <>💡 Type a room name and hit <b>→</b> to join the discussion. No signup, no app.</>
+        )}
+      </Text>
       {showPassword && (
         <Input
           value={password}
           onChange={setPassword}
           onKeyDown={handleEnterPassword}
-          placeholder="password — 8+ chars opens your private page"
+          placeholder="Optional password (8+ characters)"
           type="password"
           size="md"
           w="100%"
@@ -213,8 +225,8 @@ const Header = () => {
           </HStack>
         ) : thread ? (
           <HStack spacing={2} w="100%" alignItems="center" justifyContent="space-between">
-            <Text fontSize="sm" fontWeight="bold" color="purple.300" minW={0} flex={1} isTruncated>
-              t/{thread}
+            <Text fontSize="sm" fontWeight="bold" color="purple.300" minW={0} flex={1} isTruncated title={`Room: ${thread}`}>
+              🏠 {thread}
             </Text>
             <IconButton variant="ghost" onClick={exitThread} color="red.400" icon={<CloseIcon />} aria-label="exit room" flexShrink={0} />
           </HStack>

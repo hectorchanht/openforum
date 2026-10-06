@@ -1,7 +1,7 @@
 import { ChatIcon, CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
 import {
   Avatar, Badge, Box, Button, Collapse, HStack, IconButton, Input, Modal, ModalBody,
-  ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Text, Textarea,
+  ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Skeleton, Text, Textarea,
   Tooltip, useToast, VStack,
 } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -87,21 +87,32 @@ const QuestionCard = ({
     >
       <HStack align="flex-start" spacing={3}>
         {thread && (
-          <VStack spacing={0} minW="52px" pt={1}>
+          <VStack spacing={1} minW="56px" pt={1}>
             <Tooltip label={voteLabel}>
               <IconButton
                 size="md"
+                minW="48px"
+                minH="48px"
                 variant={voted ? 'solid' : 'ghost'}
                 colorScheme={voted ? 'cyan' : 'gray'}
                 aria-label={voted ? 'remove upvote' : 'upvote'}
-                icon={<TriangleUpIcon />}
+                aria-pressed={voted}
+                icon={<TriangleUpIcon boxSize={5} />}
                 onClick={() => onVote(post.key)}
                 isDisabled={voteDisabled}
                 borderRadius="xl"
+                borderWidth={voted ? '0' : '1px'}
+                borderColor="whiteAlpha.200"
+                boxShadow={voted ? '0 0 14px rgba(34,211,238,0.35)' : undefined}
               />
             </Tooltip>
-            <Text fontWeight="bold" fontSize="lg" color={voted ? 'cyan.300' : undefined}>
-              {voteCount}
+            <Text
+              fontWeight="extrabold"
+              fontSize="lg"
+              color={voted ? 'cyan.300' : 'gray.400'}
+              aria-label={`${voteCount} upvotes${voted ? ' — you upvoted this' : ''}`}
+            >
+              ▲ {voteCount}
             </Text>
           </VStack>
         )}
@@ -109,7 +120,7 @@ const QuestionCard = ({
         <VStack align="stretch" flex={1} minW={0} spacing={1.5}>
           <HStack spacing={2} flexWrap="wrap" fontSize="xs" opacity={0.9}>
             <Avatar
-              size="xs"
+              size="sm"
               bg={`${av.color}.500`}
               icon={<Text fontSize="sm">{av.emoji}</Text>}
               title={name ? `asked by ${name}` : 'anonymous asker'}
@@ -173,7 +184,7 @@ const QuestionCard = ({
           {replies && replies.length > 0 && (
             <Box>
               <Button
-                size="xs"
+                size="sm"
                 variant="ghost"
                 onClick={() => setThreadOpen(!threadOpen)}
                 aria-expanded={threadOpen}
@@ -213,7 +224,7 @@ const QuestionCard = ({
                         </VStack>
                         {canDelete && (
                           <IconButton
-                            size="xs"
+                            size="sm"
                             variant="ghost"
                             aria-label="delete reply"
                             icon={<DeleteIcon />}
@@ -271,7 +282,7 @@ const QuestionCard = ({
                 ) : (
                   <Tooltip label={isHost ? "Reply as host — visible to everyone" : "Reply — join the discussion"}>
                     <Button
-                      size="xs"
+                      size="sm"
                       variant="ghost"
                       leftIcon={<ChatIcon />}
                       onClick={() => setReplyOpen(true)}
@@ -284,7 +295,7 @@ const QuestionCard = ({
               {!isHost && !readOnly && (
                 <Tooltip label="Flag as inappropriate (3 flags hides it)">
                   <IconButton
-                    size="xs"
+                    size="sm"
                     variant="ghost"
                     aria-label="flag question"
                     icon={<WarningIcon />}
@@ -297,7 +308,7 @@ const QuestionCard = ({
                 <>
                   <Tooltip label={answered ? 'Mark as unanswered' : 'Mark as answered'}>
                     <IconButton
-                      size="xs" variant="ghost"
+                      size="sm" variant="ghost"
                       aria-label="toggle answered"
                       icon={<CheckIcon />}
                       color={answered ? 'green.400' : 'gray.500'}
@@ -306,7 +317,7 @@ const QuestionCard = ({
                   </Tooltip>
                   <Tooltip label={spotlighted ? 'Remove from spotlight' : 'Spotlight — now discussing'}>
                     <IconButton
-                      size="xs" variant="ghost"
+                      size="sm" variant="ghost"
                       aria-label="spotlight question"
                       icon={<ViewIcon />}
                       color={spotlighted ? 'purple.400' : 'gray.500'}
@@ -316,7 +327,7 @@ const QuestionCard = ({
                   {!orphanedMerge && (
                     <Tooltip label="Merge this duplicate into another question — its votes are added to the target">
                       <Button
-                        size="xs"
+                        size="sm"
                         variant="ghost"
                         onClick={onOpenMerge}
                       >
@@ -326,7 +337,7 @@ const QuestionCard = ({
                   )}
                   <Tooltip label={hidden ? 'Unhide' : 'Hide from audience'}>
                     <IconButton
-                      size="xs" variant="ghost"
+                      size="sm" variant="ghost"
                       aria-label="toggle hidden"
                       icon={<WarningIcon />}
                       color={hidden ? 'red.400' : 'gray.500'}
@@ -335,7 +346,7 @@ const QuestionCard = ({
                   </Tooltip>
                   <Tooltip label={pinned ? 'Unpin' : 'Pin to top'}>
                     <IconButton
-                      size="xs" variant="ghost"
+                      size="sm" variant="ghost"
                       aria-label="toggle pin"
                       icon={<StarIcon />}
                       color={pinned ? 'yellow.400' : 'gray.500'}
@@ -344,7 +355,7 @@ const QuestionCard = ({
                   </Tooltip>
                   <Tooltip label="Delete question">
                     <IconButton
-                      size="xs" variant="ghost"
+                      size="sm" variant="ghost"
                       aria-label="delete post"
                       icon={<DeleteIcon />}
                       color="red.400"
@@ -354,7 +365,7 @@ const QuestionCard = ({
                   {orphanedMerge && (
                     <Tooltip label="This question was merged into a deleted one — unmerge to restore it">
                       <Button
-                        size="xs"
+                        size="sm"
                         variant="outline"
                         colorScheme="orange"
                         onClick={() => onUnmerge(post.key)}
@@ -444,7 +455,7 @@ const MergeModal = ({
                     <Text fontSize="sm" noOfLines={2}>{String(s.text)}</Text>
                     <Text fontSize="xs" opacity={0.6}>▲ {voteCountOf(s.key)} votes</Text>
                   </VStack>
-                  <Button size="xs" variant="outline" onClick={() => onUnmerge(s.key)}>
+                  <Button size="sm" variant="outline" onClick={() => onUnmerge(s.key)}>
                     Unmerge
                   </Button>
                 </HStack>
@@ -462,7 +473,7 @@ const PostList = () => {
   const [alias] = useAtom(aliasAtom);
   const [sortMode] = useAtom(sortModeAtom);
   const [statusFilter] = useAtom(statusFilterAtom);
-  const [search] = useAtom(searchAtom);
+  const [search, setSearch] = useAtom(searchAtom);
   const [myOnly] = useAtom(myOnlyAtom);
   const [authorFilter, setAuthorFilter] = useAtom(authorFilterAtom);
 
@@ -675,20 +686,81 @@ const PostList = () => {
   // active author filter banner (clear it from here)
   const authorFilterName = authorFilter ? pseudonym(authorFilter) : null;
 
+  // Grace-period loading state: Gun streams questions in async, so flashing
+  // "No questions yet" instantly would be wrong on slow connections. Show a
+  // skeleton briefly; the real empty state only appears after the grace.
+  const [graceDone, setGraceDone] = React.useState(false);
+  React.useEffect(() => {
+    setGraceDone(false);
+    const id = setTimeout(() => setGraceDone(true), 1500);
+    return () => clearTimeout(id);
+  }, [thread]);
+
   if (!visible.length) {
-    return (
-      <Box textAlign="center" py={14} opacity={0.6}>
-        <Text fontSize="5xl" mb={3}>🎤</Text>
-        <Text fontSize="lg" fontWeight="semibold" mb={1}>
-          {search.trim() ? 'No questions match your search' : 'No questions yet'}
-        </Text>
-        <Text fontSize="sm">
-          {search.trim()
-            ? 'Try a different keyword — or be the first to ask it.'
+    if (thread && !graceDone) {
+      return (
+        <VStack align="stretch" spacing={3} aria-label="Loading questions…">
+          {[0, 1, 2].map((i) => (
+            <Box key={i} layerStyle="glass" p={3}>
+              <HStack spacing={3}>
+                <Skeleton height="48px" width="48px" borderRadius="xl" />
+                <VStack align="stretch" flex={1} spacing={2}>
+                  <Skeleton height="14px" width="40%" borderRadius="md" />
+                  <Skeleton height="18px" width="90%" borderRadius="md" />
+                </VStack>
+              </HStack>
+            </Box>
+          ))}
+        </VStack>
+      );
+    }
+    const q = search.trim();
+    const empty = q
+      ? {
+          emoji: '🔍',
+          title: `No questions match “${q.slice(0, 40)}”`,
+          body: 'Try a different keyword — or be the first to ask it.',
+          action: <Button size="sm" minH="44px" variant="outline" onClick={() => setSearch('')}>Clear search</Button>,
+        }
+      : myOnly
+        ? {
+            emoji: '🙋',
+            title: "You haven't asked anything yet",
+            body: 'Your questions will show up here — ask one in the box below.',
+          }
+        : authorFilterName
+          ? {
+              emoji: '👤',
+              title: `No questions from ${authorFilterName} in this view`,
+              body: 'Try a different filter, or clear it above.',
+            }
+          : statusFilter === 'answered'
+            ? {
+                emoji: '✅',
+                title: 'No answered questions yet',
+                body: "The host hasn't marked any question as answered.",
+              }
             : thread
-              ? 'Be the first to ask — the floor is yours.'
-              : 'Drop the first secret above.'}
+              ? {
+                  emoji: '🎤',
+                  title: 'No questions yet',
+                  body: 'Be the first to ask — the floor is yours. Tap ▲ on the questions you want answered.',
+                }
+              : {
+                  emoji: '🎤',
+                  title: 'Nothing here yet',
+                  body: 'Drop the first secret above.',
+                };
+    return (
+      <Box textAlign="center" py={14} px={4}>
+        <Text fontSize="5xl" mb={3}>{empty.emoji}</Text>
+        <Text fontSize="lg" fontWeight="semibold" mb={1}>
+          {empty.title}
         </Text>
+        <Text fontSize="sm" opacity={0.7} mb={empty.action ? 4 : 0}>
+          {empty.body}
+        </Text>
+        {empty.action}
       </Box>
     );
   }
@@ -699,7 +771,7 @@ const PostList = () => {
         <HStack layerStyle="glass" p={2} px={3} borderRadius="xl" fontSize="sm" justify="space-between">
           <Text>👤 Showing questions by <Text as="span" fontWeight="bold">{authorFilterName}</Text></Text>
           <IconButton
-            size="xs"
+            size="sm"
             variant="ghost"
             aria-label="clear author filter"
             icon={<CloseIcon />}

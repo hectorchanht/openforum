@@ -9,6 +9,7 @@ import {
   IconButton,
   Input,
   Select,
+  Skeleton,
   Text,
   Tooltip,
   useToast,
@@ -61,15 +62,17 @@ const FilterTabs = () => {
   ];
   return (
     <HStack spacing={1} flexWrap="wrap">
-      <HStack spacing={1} bg="whiteAlpha.100" p={1} borderRadius="xl">
+      <HStack spacing={1} bg="whiteAlpha.100" p={1} borderRadius="xl" flexWrap="wrap">
         {tabs.map((t) => (
           <Button
             key={t.id}
-            size="sm"
+            size="md"
+            minH="44px"
             variant={filter === t.id ? 'solid' : 'ghost'}
             colorScheme={filter === t.id ? 'purple' : 'gray'}
             borderRadius="lg"
             onClick={() => setFilter(t.id)}
+            aria-pressed={filter === t.id}
           >
             {t.label}
           </Button>
@@ -77,7 +80,8 @@ const FilterTabs = () => {
       </HStack>
       <Tooltip label="Show only the questions you asked">
         <Button
-          size="sm"
+          size="md"
+          minH="44px"
           variant={myOnly ? 'solid' : 'ghost'}
           colorScheme={myOnly ? 'cyan' : 'gray'}
           borderRadius="lg"
@@ -85,6 +89,7 @@ const FilterTabs = () => {
             setMyOnly(!myOnly);
             if (!myOnly) setAuthorFilter(null); // mutually exclusive with author filter
           }}
+          aria-pressed={myOnly}
         >
           🙋 Mine
         </Button>
@@ -124,6 +129,7 @@ const AuthorsPanel = ({ thread, posts, votes, authors, mutedMap }) => {
         variant="outline"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
+        minH="40px"
       >
         👥 Authors ({rows.length}) {open ? '▾' : '▸'}
       </Button>
@@ -165,7 +171,8 @@ const AuthorsPanel = ({ thread, posts, votes, authors, mutedMap }) => {
                   {muted && <Badge colorScheme="red">muted</Badge>}
                 </HStack>
                 <Button
-                  size="xs"
+                  size="sm"
+                  minH="36px"
                   variant="outline"
                   colorScheme={muted ? 'green' : 'red'}
                   onClick={(e) => {
@@ -189,11 +196,14 @@ const AuthorsPanel = ({ thread, posts, votes, authors, mutedMap }) => {
 };
 
 // Room command center: title, live stats, search/sort/filter, host controls.
+// Layout priority on mobile: title → compact stats → search/sort/filter
+// (audience core) → a few audience actions → host tools tucked into one
+// collapsible so the room header never becomes a wall of controls.
 const RoomHeader = () => {
   const [thread] = useAtom(threadIdAtom);
   const [sortMode, setSortMode] = useAtom(sortModeAtom);
   const [search, setSearch] = useAtom(searchAtom);
-  const { meta, isHost, expired, closed, updateMeta, hostId, claimHost } = useThreadMeta(thread);
+  const { meta, isHost, expired, closed, readOnly, updateMeta, hostId, claimHost } = useThreadMeta(thread);
   const posts = usePosts(thread, null);
   const votes = useVotes(thread);
   const status = usePostStatus(thread);
@@ -212,6 +222,7 @@ const RoomHeader = () => {
   const [copied, setCopied] = React.useState(false);
   const [pendingOpen, setPendingOpen] = React.useState(false);
   const [pollOpen, setPollOpen] = React.useState(false);
+  const [toolsOpen, setToolsOpen] = React.useState(false);
   const [, force] = React.useReducer((x) => x + 1, 0);
 
   // re-render the countdown text
@@ -258,7 +269,21 @@ const RoomHeader = () => {
   }, [votes, myId]);
   const votesLeft = voteBudget > 0 ? Math.max(0, voteBudget - spentVotes) : null;
 
-  if (!thread || !meta) return null;
+  if (!thread) return null;
+
+  // Skeleton while the room's metadata streams in from the relay — avoids a
+  // blank pop-in under the header.
+  if (!meta) {
+    return (
+      <Box layerStyle="glass" p={4} mb={4} aria-label="Loading room…">
+        <VStack align="stretch" spacing={3}>
+          <Skeleton height="26px" width="55%" borderRadius="md" />
+          <Skeleton height="16px" width="80%" borderRadius="md" />
+          <Skeleton height="44px" width="100%" borderRadius="xl" />
+        </VStack>
+      </Box>
+    );
+  }
 
   const openPresent = () => {
     window.open(`${window.location.origin}/${thread}?present=1`, '_blank', 'noopener');
@@ -396,7 +421,7 @@ const RoomHeader = () => {
             <HStack align="start" justify="space-between">
               <Box minW={0}>
                 <Text fontSize="xl" fontWeight="extrabold" lineHeight="1.2">
-                  {meta.title || `t/${thread}`}
+                  {meta.title || thread}
                 </Text>
                 {meta.desc && (
                   <Text fontSize="sm" opacity={0.75} mt={1}>{meta.desc}</Text>
@@ -406,6 +431,8 @@ const RoomHeader = () => {
                 <Tooltip label="Edit room title & description">
                   <IconButton
                     size="sm"
+                    minH="40px"
+                    minW="40px"
                     variant="ghost"
                     aria-label="edit room title"
                     icon={<EditIcon />}
@@ -421,28 +448,30 @@ const RoomHeader = () => {
           )}
         </Box>
 
-        {/* Live stats */}
-        <HStack spacing={2} flexWrap="wrap" fontSize="sm">
-          {isHost && <Badge colorScheme="purple" fontSize="xs" px={2} py={1}>👑 host</Badge>}
-          <Badge fontSize="xs" px={2} py={1} colorScheme="cyan">💬 {stats.questions} questions</Badge>
-          <Badge fontSize="xs" px={2} py={1} colorScheme="blue">▲ {stats.votes} votes</Badge>
-          <Badge fontSize="xs" px={2} py={1} colorScheme="green">👥 ~{stats.participants} here</Badge>
+        {/* Live stats — one compact line instead of a badge wall */}
+        <Text fontSize="sm" lineHeight="1.6">
+          {isHost && <Text as="span" mr={1}>👑</Text>}
+          💬 <Text as="span" fontWeight="bold">{stats.questions}</Text> question{stats.questions !== 1 ? 's' : ''}
+          {' · '}▲ <Text as="span" fontWeight="bold">{stats.votes}</Text> vote{stats.votes !== 1 ? 's' : ''}
+          {' · '}👥 ~<Text as="span" fontWeight="bold">{stats.participants}</Text> here
           {meta.expiresAt != null && !expired && (
-            <Badge fontSize="xs" px={2} py={1} colorScheme="orange">⏳ {fmtCountdown(meta.expiresAt - Date.now())}</Badge>
+            <Text as="span"> · ⏳ {fmtCountdown(meta.expiresAt - Date.now())}</Text>
           )}
-          {meta.expiresAt == null && (
-            <Badge fontSize="xs" px={2} py={1} colorScheme="gray">∞ never expires</Badge>
-          )}
+          {meta.expiresAt == null && <Text as="span"> · ∞ never expires</Text>}
+        </Text>
+
+        {/* Room status badges — only the ones that need attention */}
+        <HStack spacing={2} flexWrap="wrap">
           {meta.slowModeSec > 0 && (
             <Badge fontSize="xs" px={2} py={1} colorScheme="yellow">🐢 slow mode {meta.slowModeSec}s</Badge>
           )}
           {meta.moderated && (
-            <Badge fontSize="xs" px={2} py={1} colorScheme="orange">🛡 questions reviewed by host</Badge>
+            <Badge fontSize="xs" px={2} py={1} colorScheme="orange">🛡 host reviews questions before they go live</Badge>
           )}
           {voteBudget > 0 ? (
-            <Tooltip label={votesLeft <= 0 ? 'Retract an upvote to get a vote back' : 'Upvoting spends one — retracting refunds it'}>
+            <Tooltip label={votesLeft <= 0 ? 'You\'ve used all your votes — retract one to get it back' : 'Tapping ▲ spends one vote — retracting refunds it'}>
               <Badge fontSize="xs" px={2} py={1} colorScheme={votesLeft <= 0 ? 'red' : 'teal'}>
-                🗳️ {votesLeft} vote{votesLeft !== 1 ? 's' : ''} left
+                🗳️ {votesLeft} of {voteBudget} votes left
               </Badge>
             </Tooltip>
           ) : (
@@ -450,38 +479,39 @@ const RoomHeader = () => {
           )}
         </HStack>
 
-        {/* Search / sort / filter */}
-        <HStack spacing={2} flexWrap="wrap">
+        {/* Search + sort — primary audience controls */}
+        <HStack spacing={2}>
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="🔍 Search questions…"
-            maxW={{ base: '100%', md: '240px' }}
-            size="sm"
+            size="md"
+            minH="44px"
+            flex={1}
+            minW={0}
+            aria-label="Search questions"
           />
           <Select
             value={sortMode}
             onChange={(e) => setSortMode(e.target.value)}
-            maxW="150px"
-            aria-label="sort questions"
+            maxW="148px"
+            flexShrink={0}
+            size="md"
+            minH="44px"
+            aria-label="Sort questions"
           >
             <option value="top">🔥 Top votes</option>
             <option value="newest">🕐 Newest</option>
           </Select>
-          <FilterTabs />
         </HStack>
+        <FilterTabs />
 
-        {/* Host controls */}
+        {/* Audience actions — the few things everyone needs */}
         <HStack spacing={2} flexWrap="wrap">
-          <Button size="sm" variant="outline" leftIcon={<ExternalLinkIcon />} onClick={openPresent}>
-            Present mode
-          </Button>
-          <Button size="sm" variant="outline" leftIcon={<DownloadIcon />} onClick={exportCSV}>
-            Export CSV
-          </Button>
           <Tooltip label={notify.enabled ? 'Turn off new-question alerts' : 'Get a ping when a new question arrives'}>
             <Button
               size="sm"
+              minH="40px"
               variant={notify.enabled ? 'solid' : 'outline'}
               colorScheme={notify.enabled ? 'purple' : 'gray'}
               leftIcon={<BellIcon />}
@@ -491,89 +521,135 @@ const RoomHeader = () => {
             </Button>
           </Tooltip>
           <ShareQR thread={thread} />
+          <Tooltip label="Download all questions, votes, and poll results as a spreadsheet">
+            <Button size="sm" minH="40px" variant="outline" leftIcon={<DownloadIcon />} onClick={exportCSV}>
+              📥 Export
+            </Button>
+          </Tooltip>
+          <Tooltip label="Fullscreen projector view — shows the spotlighted question big and updates live as the host moves on">
+            <Button size="sm" minH="40px" variant="outline" leftIcon={<ExternalLinkIcon />} onClick={openPresent}>
+              🎙 Present
+            </Button>
+          </Tooltip>
           {isHost && (
-            <>
-              <Tooltip label="New questions need your approval before going live">
-                <Button
-                  size="sm"
-                  variant={meta.moderated ? 'solid' : 'outline'}
-                  colorScheme={meta.moderated ? 'orange' : 'gray'}
-                  onClick={() => updateMeta({ moderated: !meta.moderated })}
-                >
-                  🛡 {meta.moderated ? 'Moderation on' : 'Pre-moderation'}
-                </Button>
-              </Tooltip>
-              {pending.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  colorScheme="orange"
-                  onClick={() => setPendingOpen(!pendingOpen)}
-                >
-                  ⏳ Pending review ({pending.length})
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => { setKeyOpen(!keyOpen); setClaimOpen(false); }}
-              >
-                🔑 Host key
-              </Button>
-              <Tooltip label="Create a live single-choice poll for the audience">
-                <Button size="sm" variant="outline" onClick={() => setPollOpen(true)}>
-                  📊 New poll
-                </Button>
-              </Tooltip>
-            </>
+            <Button
+              size="sm"
+              minH="40px"
+              variant={toolsOpen ? 'solid' : 'outline'}
+              colorScheme="purple"
+              onClick={() => setToolsOpen(!toolsOpen)}
+              aria-expanded={toolsOpen}
+            >
+              🛠 Host tools{pending.length > 0 ? ` (${pending.length} ⏳)` : ''} {toolsOpen ? '▾' : '▸'}
+            </Button>
           )}
           {!isHost && (
             <Button
               size="sm"
+              minH="40px"
               variant="ghost"
               onClick={() => { setClaimOpen(!claimOpen); setKeyOpen(false); }}
             >
               🔑 Have a host key?
             </Button>
           )}
-          {isHost && (
-            <>
-              <Select
-                value={meta.slowModeSec || 0}
-                onChange={(e) => updateMeta({ slowModeSec: Number(e.target.value) })}
-                maxW="130px"
-                aria-label="slow mode cooldown"
+        </HStack>
+
+        {/* Host tools — everything host-only lives in this one collapsible */}
+        {isHost && (
+          <Collapse in={toolsOpen} animateOpacity>
+            <VStack align="stretch" spacing={2} layerStyle="glass" p={3} borderRadius="xl">
+              <Button
+                size="sm"
+                minH="44px"
+                justifyContent="flex-start"
+                variant="ghost"
+                onClick={() => setPollOpen(true)}
               >
-                {SLOW_OPTIONS.map((o) => (
-                  <option key={o.sec} value={o.sec}>🐢 {o.label}</option>
-                ))}
-              </Select>
-              <Tooltip label="How many upvotes each person gets in this room — retracting a vote refunds it">
+                📊 New poll
+                <Text as="span" fontWeight="normal" opacity={0.6} fontSize="xs" ml={2}>
+                  single choice, results update live
+                </Text>
+              </Button>
+              {pending.length > 0 && (
+                <Button
+                  size="sm"
+                  minH="44px"
+                  justifyContent="flex-start"
+                  variant="ghost"
+                  colorScheme="orange"
+                  onClick={() => setPendingOpen(!pendingOpen)}
+                >
+                  ⏳ Review pending questions ({pending.length})
+                </Button>
+              )}
+              <HStack justify="space-between" flexWrap="wrap" spacing={2}>
+                <Tooltip label="Limit how often each person can post — slows down spam">
+                  <Text fontSize="sm">🐢 Slow mode</Text>
+                </Tooltip>
+                <Select
+                  value={meta.slowModeSec || 0}
+                  onChange={(e) => updateMeta({ slowModeSec: Number(e.target.value) })}
+                  maxW="140px"
+                  size="md"
+                  aria-label="Slow mode cooldown"
+                >
+                  {SLOW_OPTIONS.map((o) => (
+                    <option key={o.sec} value={o.sec}>🐢 {o.label}</option>
+                  ))}
+                </Select>
+              </HStack>
+              <HStack justify="space-between" flexWrap="wrap" spacing={2}>
+                <Tooltip label="How many upvotes each person gets in this room — retracting a vote refunds it">
+                  <Text fontSize="sm">🗳️ Votes per person</Text>
+                </Tooltip>
                 <Select
                   value={voteBudget}
                   onChange={(e) => updateMeta({ voteBudget: Number(e.target.value) })}
-                  maxW="150px"
-                  aria-label="vote budget per person"
+                  maxW="170px"
+                  size="md"
+                  aria-label="Vote budget per person"
                 >
                   <option value={0}>🗳️ Unlimited</option>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                     <option key={n} value={n}>🗳️ {n} vote{n !== 1 ? 's' : ''} each</option>
                   ))}
                 </Select>
-              </Tooltip>
+              </HStack>
               <Button
                 size="sm"
-                variant="outline"
+                minH="44px"
+                justifyContent="flex-start"
+                variant="ghost"
+                colorScheme={meta.moderated ? 'orange' : 'gray'}
+                onClick={() => updateMeta({ moderated: !meta.moderated })}
+              >
+                🛡 {meta.moderated ? 'Pre-moderation on — tap to turn off' : 'Pre-moderation — approve questions before they go live'}
+              </Button>
+              <Button
+                size="sm"
+                minH="44px"
+                justifyContent="flex-start"
+                variant="ghost"
+                onClick={() => { setKeyOpen(!keyOpen); setClaimOpen(false); }}
+              >
+                🔑 Host key — save it or share with a co-host
+              </Button>
+              <Button
+                size="sm"
+                minH="44px"
+                justifyContent="flex-start"
+                variant="ghost"
                 colorScheme={closed ? 'green' : 'red'}
                 onClick={() => updateMeta({ closed: !closed })}
               >
-                {closed ? 'Reopen room' : 'Close room'}
+                {closed ? '🟢 Reopen room' : '🔴 Close room (read-only for everyone)'}
               </Button>
-            </>
-          )}
-        </HStack>
+            </VStack>
+          </Collapse>
+        )}
 
-        {/* Host access panels: host key / claim host */}
+        {/* Host key panel (host) */}
         {isHost && (
           <Collapse in={keyOpen} animateOpacity>
             <Box layerStyle="glass" p={3} borderRadius="xl">
@@ -587,7 +663,7 @@ const RoomHeader = () => {
                   minW={0}
                   onFocus={(e) => e.target.select()}
                 />
-                <Button size="sm" onClick={copyHostKey} flexShrink={0}>
+                <Button size="sm" minH="40px" onClick={copyHostKey} flexShrink={0}>
                   {copied ? 'Copied!' : 'Copy'}
                 </Button>
               </HStack>
@@ -616,7 +692,7 @@ const RoomHeader = () => {
                   minW={0}
                   onKeyDown={(e) => { if (e.key === 'Enter') doClaimHost(); }}
                 />
-                <Button size="sm" colorScheme="purple" onClick={doClaimHost} isDisabled={!claimDraft.trim()} flexShrink={0}>
+                <Button size="sm" minH="40px" colorScheme="purple" onClick={doClaimHost} isDisabled={!claimDraft.trim()} flexShrink={0}>
                   Claim host
                 </Button>
               </HStack>
@@ -657,7 +733,8 @@ const RoomHeader = () => {
                   </Box>
                   <HStack flexShrink={0}>
                     <Button
-                      size="xs"
+                      size="sm"
+                      minH="40px"
                       colorScheme="green"
                       onClick={() => doApprove(item.key, String(item.text))}
                       isDisabled={readOnly}
@@ -665,7 +742,8 @@ const RoomHeader = () => {
                       Approve
                     </Button>
                     <Button
-                      size="xs"
+                      size="sm"
+                      minH="40px"
                       variant="outline"
                       colorScheme="red"
                       onClick={() => doReject(item.key)}

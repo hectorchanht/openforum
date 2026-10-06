@@ -31,7 +31,7 @@ const HeapItem = ({ item, onPromote, onUpdate, onDelete }) => {
     <Box layerStyle="glass" borderRadius="xl" p={3} w="100%" minW={0}>
       <HStack spacing={2} mb={2} flexWrap="wrap">
         <Badge colorScheme="purple" borderRadius="full" px={2} flexShrink={0}>
-          {item.room === 'lobby' ? '🏠 lobby' : `t/${item.room}`}
+          {item.room === 'lobby' ? '🏠 lobby' : `🏠 ${item.room}`}
         </Badge>
         <Text fontSize="xs" opacity={0.55} flexShrink={0}>
           {timeAgo(item.createdAt)}
@@ -154,13 +154,18 @@ const ThoughtHeapButton = () => {
   return (
     <>
       <Box position="relative" flexShrink={0}>
-        <IconButton
+        <Button
+          size="sm"
           variant="ghost"
-          aria-label="thought heap — park a thought"
-          title="🧠 Thought heap — park a thought before you forget it"
-          icon={<Text fontSize="lg" lineHeight={1}>🧠</Text>}
+          minH="44px"
+          px={2}
+          leftIcon={<Text fontSize="lg" lineHeight={1}>🧠</Text>}
+          aria-label="Thought heap — park a thought before you forget it"
+          title="🧠 Thought heap — your private scratchpad (stays on this device)"
           onClick={onOpen}
-        />
+        >
+          Heap
+        </Button>
         {items.length > 0 && (
           <Badge
             position="absolute"
@@ -208,7 +213,7 @@ const ThoughtHeapButton = () => {
                   value={capture}
                   onChange={(e) => setCapture(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') park(); }}
-                  placeholder={thread ? `Park a thought for t/${thread}…` : 'Park a thought…'}
+                  placeholder={thread ? `Park a thought for “${thread}”…` : 'Park a thought…'}
                   size="md"
                   flex={1}
                   minW={0}
@@ -218,6 +223,8 @@ const ThoughtHeapButton = () => {
                   onClick={park}
                   isDisabled={!capture.trim()}
                   flexShrink={0}
+                  minH="44px"
+                  aria-label="Park this thought"
                 >
                   Park
                 </Button>

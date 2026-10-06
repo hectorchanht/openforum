@@ -39,14 +39,14 @@ const ShareQR = ({ thread }) => {
 
   return (
     <>
-      <Button size="xs" variant="outline" onClick={onOpen} title="Show QR code to join">
+      <Button size="sm" minH="40px" variant="outline" onClick={onOpen} title="Show a QR code so the audience can join from their phones">
         <Box as="span" mr={1}>▦</Box> QR join
       </Button>
 
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader fontSize="md">Scan to join t/{thread}</ModalHeader>
+          <ModalHeader fontSize="md">Scan to join “{thread}”</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
             <VStack spacing={3}>
