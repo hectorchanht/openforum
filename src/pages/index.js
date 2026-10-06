@@ -14,14 +14,16 @@ import ThreadMeta from '../components/ThreadMeta';
 import { authorFilterAtom, myOnlyAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 const Hero = () => (
-  <Box textAlign="center" py={{ base: 8, md: 14 }} px={4}>
+  <Box textAlign="center" py={{ base: 8, md: 14 }} px={0}>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Box display="flex" justifyContent="center" mb={4}>
-        <Logo size={76} wordmark />
+      {/* fluid wordmark: clamp() scales with the viewport so "OpenForum"
+          never clips on narrow phones (was cut off at 360px with nowrap). */}
+      <Box display="flex" justifyContent="center" mb={4} maxW="100%">
+        <Logo size={64} wordmark wordmarkFontSize="clamp(1.75rem, 9vw, 2.75rem)" />
       </Box>
       <Heading
         size="2xl"

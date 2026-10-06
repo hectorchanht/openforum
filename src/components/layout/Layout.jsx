@@ -10,7 +10,9 @@ import Header from "./Header";
 const Layout = ({ children }) => {
   const [alertMsg, setAlertMsg] = useAtom(alertMsgAtom);
   return (
-    <Container maxW="960px" display="flex" flexDirection="column" minH="100dvh" pb={4} overflowX="clip">
+    <Container maxW="960px" display="flex" flexDirection="column" minH="100dvh" pb={4} px={4} overflowX="clip">
+      {/* px={4}: the single page gutter — header, hero, cards, footer all
+          align to it (children must not add their own horizontal padding). */}
       {/* overflowX="clip": defensive guard — no single misbehaving element
           can ever trigger mobile Chrome's shrink-to-fit again. `clip` (unlike
           `hidden`) doesn't create a scroll container, so the sticky header
@@ -40,7 +42,7 @@ const Layout = ({ children }) => {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
       <Header />
-      <Box p={1} as="main" flex={1}>
+      <Box as="main" flex={1} px={0}>
         {children}
       </Box>
       <AlertMsg msg={alertMsg} setMsg={setAlertMsg} />

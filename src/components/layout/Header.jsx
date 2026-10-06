@@ -1,5 +1,5 @@
 import { ArrowRightIcon, CloseIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { Box, HStack, IconButton, Input, Text, useColorMode } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Input, Text, VStack, useColorMode } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { useRouter } from 'next/router';
 import React from "react";
@@ -118,75 +118,108 @@ const Header = () => {
     // const deleteUser = () => gun.user().delete(username, password);
 
     return <>
-      <Text fontSize="sm" fontWeight="semibold" color="purple.300" maxW="40vw" isTruncated>
+      <Text fontSize="sm" fontWeight="semibold" color="purple.300" minW={0} flex={1} isTruncated>
         u/{gun.user()?.is?.alias}
       </Text>
       {/* <IconButton variant={"ghost"} onClick={deleteUser} icon={<DeleteIcon />} /> */}
-      <IconButton variant={"ghost"} onClick={logout} color={'red'} icon={<CloseIcon />} aria-label="log out" />
+      <IconButton variant={"ghost"} onClick={logout} color={'red'} icon={<CloseIcon />} aria-label="log out" flexShrink={0} />
     </>
   };
 
   const handleEnterShortSecret = (event) => (event.key === 'Enter' && password.length === 0) && setThread();
+  const handleEnterPassword = (event) => {
+    if (event.key !== 'Enter') return;
+    if (password.length >= 8) loginGun(); else setThread();
+  };
+
+  const showPassword = username && username.length >= 4;
+  const holyMode = password.length >= 8;
+
+  // Joined input group: room-name input with the » button attached at its
+  // right end (search-bar style). The button's -1px overlap + square inner
+  // corners make them read as one control; it can never wrap onto its own
+  // row, which was the mobile shrink-to-fit trigger.
+  const roomEntry = (
+    <VStack w="100%" spacing={2} align="stretch">
+      <HStack spacing={0} w="100%">
+        <Input
+          ref={usernameRef}
+          value={username}
+          placeholder="room name"
+          onChange={setUsername}
+          onKeyDown={handleEnterShortSecret}
+          size="md"
+          flex={1}
+          minW={0}
+          borderRightRadius={0}
+          position="relative"
+          _focus={{ zIndex: 1 }}
+        />
+        <IconButton
+          aria-label={holyMode ? 'open holy page' : 'join room'}
+          title={holyMode
+            ? 'Purple arrow: password-protected holy page (u/your-alias)'
+            : 'Green arrow: join room (password empty)'}
+          isDisabled={!username.length || !!alertMsg.length}
+          variant="solid"
+          colorScheme={holyMode ? 'purple' : 'green'}
+          onClick={holyMode ? loginGun : setThread}
+          icon={<ArrowRightIcon />}
+          size="md"
+          borderLeftRadius={0}
+          ml="-1px"
+          flexShrink={0}
+        />
+      </HStack>
+      {showPassword && (
+        <Input
+          value={password}
+          onChange={setPassword}
+          onKeyDown={handleEnterPassword}
+          placeholder="password — 8+ chars opens your private page"
+          type="password"
+          size="md"
+          w="100%"
+          minW={0}
+        />
+      )}
+    </VStack>
+  );
 
   return (
     <Box as={"header"} mb={3} position="sticky" top={2} zIndex={20}>
-      {/* flexWrap: the row must never force horizontal overflow — on narrow
-          screens the room-entry cluster wraps below instead of squeezing the
-          whole page (mobile Chrome shrink-to-fit). */}
-      <HStack
-        p={2}
-        pl={3}
-        borderRadius="2xl"
-        spacing={1}
-        justifyContent="space-between"
-        flexWrap="wrap"
-        rowGap={2}
+      <VStack
         layerStyle="glass"
+        borderRadius="2xl"
+        p={3}
+        spacing={3}
+        align="stretch"
       >
-        <HStack spacing={1} flexShrink={0}>
-          <RelayStatus />
-          <Logo size={30} onClick={exitThread} />
-          <ToggleColor />
+        {/* Row 1: brand lockup left, status controls right */}
+        <HStack justifyContent="space-between" alignItems="center" w="100%" spacing={2}>
+          <Logo size={30} wordmark onClick={exitThread} />
+          <HStack spacing={0} flexShrink={0}>
+            <RelayStatus />
+            <ToggleColor />
+          </HStack>
         </HStack>
 
-        {
-          gun.user().is
-            ? <IsLogin />
-            : (thread
-              ? (
-                <HStack spacing={1}>
-                  <Text fontSize="sm" fontWeight="bold" color="purple.300" maxW="40vw" isTruncated>
-                    t/{thread}
-                  </Text>
-                  <IconButton variant="ghost" onClick={exitThread} color="red.400" icon={<CloseIcon />} aria-label="exit room" />
-                </HStack>
-              ) : (
-                /* minW={0} + flex={1}: this cluster must shrink (never overflow)
-                   when the password field appears on narrow screens. */
-                <HStack spacing={1} flexWrap="wrap" justify="flex-end" flex={1} minW={0}>
-                  <Input
-                    ref={usernameRef}
-                    value={username} width="auto" placeholder="room name"
-                    onChange={setUsername} onKeyDown={handleEnterShortSecret}
-                    size="sm" maxW="150px" minW={0} flexShrink={1} />
-
-                  {username && username.length >= 4 && (
-                    <Input value={password} width="auto" onChange={setPassword} placeholder="password" type="password" size="sm" maxW="130px" minW={0} flexShrink={1} />)}
-
-                  <IconButton
-                    aria-label={password.length >= 8 ? 'open holy page' : 'join room'}
-                    title={password.length >= 8
-                      ? 'Purple arrow: password-protected holy page (u/your-alias)'
-                      : 'Green arrow: join room (password empty)'}
-                    isDisabled={!username.length || alertMsg.length}
-                    variant="solid"
-                    colorScheme={password.length >= 8 ? 'purple' : 'green'}
-                    onClick={password.length >= 8 ? loginGun : setThread}
-                    icon={<ArrowRightIcon />}
-                    flexShrink={0} />
-                </HStack>
-              ))}
-      </HStack>
+        {/* Row 2: context-dependent — room entry, in-room, or logged in */}
+        {gun.user().is ? (
+          <HStack spacing={2} w="100%" alignItems="center">
+            <IsLogin />
+          </HStack>
+        ) : thread ? (
+          <HStack spacing={2} w="100%" alignItems="center" justifyContent="space-between">
+            <Text fontSize="sm" fontWeight="bold" color="purple.300" minW={0} flex={1} isTruncated>
+              t/{thread}
+            </Text>
+            <IconButton variant="ghost" onClick={exitThread} color="red.400" icon={<CloseIcon />} aria-label="exit room" flexShrink={0} />
+          </HStack>
+        ) : (
+          roomEntry
+        )}
+      </VStack>
     </Box>
   );
 };

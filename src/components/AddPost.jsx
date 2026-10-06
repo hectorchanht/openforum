@@ -162,12 +162,13 @@ const AddPost = () => {
         left={0}
         right={0}
         zIndex={10}
-        px={3}
+        px={4}
         pb="calc(env(safe-area-inset-bottom, 0px) + 12px)"
         pt={6}
         bgGradient="linear(to-t, #0b0b14 55%, transparent)"
       >
-        <Box maxW="888px" mx="auto">
+        {/* px-4 + maxW 960px: aligns the composer with the page gutter */}
+        <Box maxW="960px" mx="auto">
           {composer}
         </Box>
       </Box>

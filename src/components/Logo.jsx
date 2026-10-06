@@ -39,19 +39,22 @@ export const LogoMark = ({ size = 32, ...rest }) => (
 );
 
 // Horizontal lockup: mark + "OpenForum" wordmark ("Forum" in the brand gradient).
-const Logo = ({ size = 32, wordmark = false, onClick, ...rest }) => (
+// wordmarkFontSize accepts a CSS clamp() so the hero wordmark can scale with
+// the viewport and never clip on narrow phones.
+const Logo = ({ size = 32, wordmark = false, wordmarkFontSize, onClick, ...rest }) => (
   <HStack
     spacing={2.5}
     onClick={onClick}
     cursor={onClick ? "pointer" : undefined}
     title={onClick ? "OpenForum home" : undefined}
     userSelect="none"
+    maxW="100%"
     {...rest}
   >
     <LogoMark size={size} />
     {wordmark && (
       <Text
-        fontSize={size * 0.58}
+        fontSize={wordmarkFontSize || size * 0.58}
         fontWeight="extrabold"
         letterSpacing="-0.02em"
         lineHeight="1"
