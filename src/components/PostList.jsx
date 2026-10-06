@@ -588,7 +588,7 @@ const PostList = () => {
           {search.trim()
             ? 'Try a different keyword — or be the first to ask it.'
             : thread
-              ? 'Be the first to ask — the mic is yours.'
+              ? 'Be the first to ask — the floor is yours.'
               : 'Drop the first secret above.'}
         </Text>
       </Box>

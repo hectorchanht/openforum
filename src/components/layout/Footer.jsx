@@ -56,7 +56,7 @@ const Footer = () => {
         <Box display="flex" alignItems="center" gap={2}>
           <LogoMark size={20} />
           <Text fontSize="xs" opacity={0.55}>
-            OpenMic — decentralized live Q&amp;A · MIT
+            OpenForum — decentralized live Q&amp;A · MIT
           </Text>
         </Box>
         <Box display="flex" alignItems="center" fontSize="xs" opacity={0.7}>
@@ -80,7 +80,7 @@ const Footer = () => {
             </MenuItem>
             <MenuItem
               as="a"
-              href="https://github.com/hectorchanht/openmic"
+              href="https://github.com/hectorchanht/openforum"
               target="_blank"
               rel="noopener noreferrer"
               icon={<GithubIcon colorMode={colorMode} boxSize={4} />}

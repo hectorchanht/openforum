@@ -1,9 +1,9 @@
-# 🎤 OpenMic
+# 💬 OpenForum
 
-**Give your audience an open mic** — live anonymous Q&A for events. Open a
+**Give your audience an open forum** — live anonymous Q&A for events. Open a
 link, get questions in realtime. No signup, no app, no friction.
 
-Live demo: [openmic.hectorchan.com](https://openmic.hectorchan.com)
+Live demo: [openforum.hectorchan.com](https://openforum.hectorchan.com)
 
 ## How it works
 
@@ -107,7 +107,7 @@ All moderation state (`st/` nodes, `r/` replies, `p/` pending, `meta.discussingK
 `meta.mutedAuthors`, `a/` author ids, `st/<key>.mergedInto`) is **additive**:
 rooms created by older versions keep working, they just don't have the new fields.
 
-> **Pseudonymity model (read this):** OpenMic is *pseudonymous*, not
+> **Pseudonymity model (read this):** OpenForum is *pseudonymous*, not
 > unlinkably anonymous. Your browser gets a random id (`rg_vid` in
 > localStorage); every question you ask is stamped with it (at
 > `t/<thread>/a/<postKey>`) and deterministically mapped to a public

@@ -269,7 +269,7 @@ const RoomHeader = () => {
         ];
       }),
     ];
-    downloadCSV(`openmic-${thread}-export.csv`, rows);
+    downloadCSV(`openforum-${thread}-export.csv`, rows);
     toast({ title: 'CSV exported', status: 'success', duration: 1500, isClosable: true });
   };
 

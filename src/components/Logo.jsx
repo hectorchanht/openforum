@@ -9,7 +9,7 @@ export const LogoMark = ({ size = 32, ...rest }) => (
     height={size}
     viewBox="0 0 64 64"
     role="img"
-    aria-label="OpenMic logo"
+    aria-label="OpenForum logo"
     style={{ display: "block", flexShrink: 0 }}
     {...rest}
   >
@@ -38,13 +38,13 @@ export const LogoMark = ({ size = 32, ...rest }) => (
   </svg>
 );
 
-// Horizontal lockup: mark + "OpenMic" wordmark ("Mic" in the brand gradient).
+// Horizontal lockup: mark + "OpenForum" wordmark ("Forum" in the brand gradient).
 const Logo = ({ size = 32, wordmark = false, onClick, ...rest }) => (
   <HStack
     spacing={2.5}
     onClick={onClick}
     cursor={onClick ? "pointer" : undefined}
-    title={onClick ? "OpenMic home" : undefined}
+    title={onClick ? "OpenForum home" : undefined}
     userSelect="none"
     {...rest}
   >
@@ -63,7 +63,7 @@ const Logo = ({ size = 32, wordmark = false, onClick, ...rest }) => (
           bgGradient="linear(to-r, #a78bfa, #e879f9)"
           bgClip="text"
         >
-          Mic
+          Forum
         </Text>
       </Text>
     )}

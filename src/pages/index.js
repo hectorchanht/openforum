@@ -29,7 +29,7 @@ const Hero = () => (
         bgGradient="linear(to-r, #a78bfa, #e879f9)"
         bgClip="text"
       >
-        Give your audience an open mic
+        Give your audience an open forum
       </Heading>
       <Text fontSize="lg" opacity={0.8} mb={6} maxW="520px" mx="auto">
         Live anonymous Q&amp;A for events. Open a room, flash the QR code —
