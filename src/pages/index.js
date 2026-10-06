@@ -10,7 +10,7 @@ import PresentView from '../components/PresentView';
 import RoomHeader from '../components/RoomHeader';
 import Spotlight from '../components/Spotlight';
 import ThreadMeta from '../components/ThreadMeta';
-import { searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
+import { authorFilterAtom, myOnlyAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 const Hero = () => (
   <Box textAlign="center" py={{ base: 8, md: 14 }} px={4}>
@@ -71,6 +71,7 @@ const Hero = () => (
     <HStack justify="center" spacing={4} mt={8} fontSize="xs" opacity={0.6} flexWrap="wrap">
       <Text>🗳 Upvotes</Text>
       <Text>🎙 Present mode</Text>
+      <Text>👥 Authors</Text>
       <Text>🐢 Slow mode</Text>
       <Text>📥 CSV export</Text>
       <Text>🔔 Host alerts</Text>
@@ -84,6 +85,8 @@ export default function Home() {
   const [, setSearch] = useAtom(searchAtom);
   const [, setSortMode] = useAtom(sortModeAtom);
   const [, setStatusFilter] = useAtom(statusFilterAtom);
+  const [, setMyOnly] = useAtom(myOnlyAtom);
+  const [, setAuthorFilter] = useAtom(authorFilterAtom);
   const router = useRouter();
 
   // reset list controls when leaving a room
@@ -92,8 +95,10 @@ export default function Home() {
       setSearch('');
       setSortMode('top');
       setStatusFilter('open');
+      setMyOnly(false);
+      setAuthorFilter(null);
     }
-  }, [thread, setSearch, setSortMode, setStatusFilter]);
+  }, [thread, setSearch, setSortMode, setStatusFilter, setMyOnly, setAuthorFilter]);
 
   // ?present=1 — projector view showing only the spotlighted question, live.
   const present = React.useMemo(

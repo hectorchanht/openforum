@@ -1,12 +1,12 @@
-import { CheckIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
+import { CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
 import { Avatar, Badge, Box, HStack, IconButton, Text, Tooltip, VStack } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAtom } from "jotai";
 import React from "react";
 import gun from "../libs/gun";
-import { avatarFor, timeAgo } from "../libs/helpers";
+import { avatarFor, pseudonym, timeAgo } from "../libs/helpers";
 import { countKeys, getVoterId, useAuthors, usePosts, usePostStatus, useThreadMeta, useVotes } from "../libs/hooks";
-import { aliasAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
+import { aliasAtom, authorFilterAtom, myOnlyAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 const MotionBox = motion(Box);
 const FLAG_THRESHOLD = 3; // N audience flags auto-hide a post from non-hosts
@@ -16,11 +16,13 @@ const QuestionCard = ({
   voteCount, voted, onVote, authorId,
   status, flagCount, hidden,
   onToggleAnswered, onToggleHidden, onFlag, onTogglePin, onDelete, onSpotlight,
+  isMine, mutedAuthor,
 }) => {
   const pinned = !!(thread && meta && meta.pinnedKey === post.key);
   const answered = !!status?.answered;
   const spotlighted = !!(thread && meta && meta.discussingKey === post.key);
   const av = avatarFor(authorId);
+  const name = authorId ? pseudonym(authorId) : null;
 
   return (
     <MotionBox
@@ -31,9 +33,9 @@ const QuestionCard = ({
       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       layerStyle="glass"
       p={3}
-      opacity={hidden ? 0.55 : 1}
-      borderColor={spotlighted ? 'purple.400' : pinned ? 'yellow.400' : undefined}
-      borderWidth={spotlighted || pinned ? '2px' : '1px'}
+      opacity={hidden || mutedAuthor ? 0.55 : 1}
+      borderColor={spotlighted ? 'purple.400' : pinned ? 'yellow.400' : isMine ? 'cyan.400' : undefined}
+      borderWidth={spotlighted || pinned || isMine ? '2px' : '1px'}
     >
       <HStack align="flex-start" spacing={3}>
         {thread && (
@@ -62,8 +64,17 @@ const QuestionCard = ({
               size="xs"
               bg={`${av.color}.500`}
               icon={<Text fontSize="sm">{av.emoji}</Text>}
-              title="anonymous asker"
+              title={name ? `asked by ${name}` : 'anonymous asker'}
             />
+            {(isHost || isMine) && name && (
+              <Tooltip label="Pseudonym — the app can't see who this really is">
+                <Text fontWeight="semibold" color={`${av.color}.300`}>
+                  {isHost ? name : 'you'}
+                </Text>
+              </Tooltip>
+            )}
+            {isMine && <Badge colorScheme="cyan">you</Badge>}
+            {mutedAuthor && isHost && <Badge colorScheme="red">muted author</Badge>}
             <Text opacity={0.6}>{timeAgo(Number(String(post.key).split('-')[0]))}</Text>
             {answered && (
               <Badge colorScheme="green" display="flex" alignItems="center" gap={1}>
@@ -170,12 +181,16 @@ const PostList = () => {
   const [sortMode] = useAtom(sortModeAtom);
   const [statusFilter] = useAtom(statusFilterAtom);
   const [search] = useAtom(searchAtom);
+  const [myOnly] = useAtom(myOnlyAtom);
+  const [authorFilter, setAuthorFilter] = useAtom(authorFilterAtom);
 
   const posts = usePosts(thread, alias);
   const votes = useVotes(thread);
   const status = usePostStatus(thread);
   const authors = useAuthors(thread);
   const { meta, isHost, readOnly, updateMeta } = useThreadMeta(thread);
+  const mine = getVoterId();
+  const mutedMap = (thread && meta && meta.mutedAuthors) || {};
 
   const voteCount = (key) => countKeys(votes[key]);
   const hasVoted = (key) => {
@@ -237,17 +252,26 @@ const PostList = () => {
         const st = status[p.key] || {};
         const flags = countKeys(st.flags);
         const hidden = !!st.hidden || (!isHost && flags >= FLAG_THRESHOLD);
+        const authorId = authors[p.key] || null;
+        const isMine = !!authorId && authorId === mine;
+        const mutedByHost = !!authorId && !!mutedMap[authorId];
         return {
           ...p,
           voteCount: thread ? voteCount(p.key) : 0,
           answered: !!st.answered,
           hidden,
           flagCount: flags,
+          authorId,
+          isMine,
+          mutedByHost,
         };
       })
       .filter((p) => {
         if (p.hidden && !isHost) return false; // hidden from audience
+        if (p.mutedByHost && !isHost) return false; // muted author: host-only view
         if (q && !String(p.text).toLowerCase().includes(q)) return false;
+        if (myOnly && thread && !p.isMine) return false; // "My questions"
+        if (authorFilter && thread && p.authorId !== authorFilter) return false;
         if (statusFilter === 'open') return !p.answered;
         if (statusFilter === 'answered') return p.answered;
         return true;
@@ -260,7 +284,10 @@ const PostList = () => {
         return a.key < b.key ? 1 : a.key > b.key ? -1 : 0;
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [posts, votes, status, thread, meta, isHost, sortMode, statusFilter, search]);
+  }, [posts, votes, status, authors, thread, meta, isHost, sortMode, statusFilter, search, myOnly, authorFilter, mine, mutedMap]);
+
+  // active author filter banner (clear it from here)
+  const authorFilterName = authorFilter ? pseudonym(authorFilter) : null;
 
   if (!visible.length) {
     return (
@@ -282,6 +309,18 @@ const PostList = () => {
 
   return (
     <VStack align="stretch" spacing={3}>
+      {authorFilterName && (
+        <HStack layerStyle="glass" p={2} px={3} borderRadius="xl" fontSize="sm" justify="space-between">
+          <Text>👤 Showing questions by <Text as="span" fontWeight="bold">{authorFilterName}</Text></Text>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            aria-label="clear author filter"
+            icon={<CloseIcon />}
+            onClick={() => setAuthorFilter(null)}
+          />
+        </HStack>
+      )}
       <AnimatePresence initial={false}>
         {visible.map((p) => (
           <QuestionCard
@@ -294,7 +333,7 @@ const PostList = () => {
             voteCount={p.voteCount}
             voted={thread ? hasVoted(p.key) : false}
             onVote={toggleVote}
-            authorId={authors[p.key]}
+            authorId={p.authorId}
             status={status[p.key]}
             flagCount={p.flagCount}
             hidden={p.hidden}
@@ -304,6 +343,8 @@ const PostList = () => {
             onTogglePin={togglePin}
             onDelete={deletePost}
             onSpotlight={toggleSpotlight}
+            isMine={p.isMine}
+            mutedAuthor={p.mutedByHost && isHost}
           />
         ))}
       </AnimatePresence>

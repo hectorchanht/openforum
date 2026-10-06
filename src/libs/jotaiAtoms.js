@@ -9,3 +9,5 @@ export const alertMsgAtom = atom('');
 export const sortModeAtom = atom('top'); // 'top' | 'newest'
 export const statusFilterAtom = atom('open'); // 'open' | 'answered' | 'all'
 export const searchAtom = atom('');
+export const myOnlyAtom = atom(false); // "My questions" toggle (asker view)
+export const authorFilterAtom = atom(null); // voterId | null — filter to one author

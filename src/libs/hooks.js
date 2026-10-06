@@ -55,6 +55,18 @@ const getStoredHostId = (thread) => {
   return window.localStorage.getItem(`rg_host_${thread}`);
 };
 
+// Sub-nodes of meta arrive with a '_' key; strip it into a plain map.
+const parseMutedAuthors = (d) => {
+  const out = {};
+  const m = d && d.mutedAuthors;
+  if (m && typeof m === 'object') {
+    Object.entries(m).forEach(([k, v]) => {
+      if (k !== '_' && v) out[k] = 1;
+    });
+  }
+  return out;
+};
+
 // Subscribes to t/<thread>/meta. The first visitor to a thread with no meta
 // becomes host by creating it (see createThread).
 // NOTE: expiry is client-enforced. Gun has no server-side TTL, so every
@@ -92,6 +104,7 @@ export const useThreadMeta = (thread) => {
             desc: d.desc || null,
             discussingKey: d.discussingKey || null,
             slowModeSec: d.slowModeSec || 0,
+            mutedAuthors: parseMutedAuthors(d),
           }
         : null);
     });
@@ -125,6 +138,19 @@ export const useThreadMeta = (thread) => {
 
   return { meta, loaded, isHost, expired, closed, readOnly, needsCreation, createThread, updateMeta };
 }
+
+// Mute/unmute an author for a thread (host only, client-enforced like all
+// host controls). Stored at t/<thread>/meta/mutedAuthors = {voterId: 1}.
+// Muted authors' posts are hidden from everyone except the host.
+export const setMutedAuthor = (thread, voterId, muted) => {
+  if (!thread || !voterId) return;
+  const mnode = gun.get(`t/${thread}/meta`).get('mutedAuthors');
+  if (muted) {
+    mnode.put({ [voterId]: 1 });
+  } else {
+    mnode.get(voterId).put(null);
+  }
+};
 
 // ---- Posts / votes / status / authors ----
 

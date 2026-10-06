@@ -52,24 +52,47 @@ Threads double as live Q&A rooms:
   whenever a new question arrives (permission asked on toggle, choice persisted).
 - **Live stats** — question count, total votes, and ~participants
   (distinct voter ids from votes + author ids) in the room header.
-- **CSV export** — the host downloads every question with votes, status
-  (answered/open/hidden), flag count, and timestamp.
+- **CSV export** — the host downloads every question with author pseudonym,
+  votes, status (answered/open/hidden), flag count, and timestamp.
 - **Room title & description** — host-editable (`meta.title`, `meta.desc`),
   shown at the top of the room.
 - **Anonymous avatars** — each post gets a deterministic emoji+color badge
   derived from the asker's anonymous id (stored additively at
   `t/<thread>/a/<postKey>`; old posts just show a default).
+- **Pseudonymous authors** — every author id deterministically maps to a
+  friendly pseudonym like "Clever Fox-7Q2" (same browser always gets the same
+  name). Everyone sees the emoji avatar; the **host sees the pseudonym** next to
+  it, and every viewer sees it as a tooltip. Your own questions get a cyan ring
+  + "you" badge so you can spot them, and the 🙋 **Mine** chip filters the list
+  to just your questions.
+- **Host Authors panel** — lists every distinct author in the room with their
+  question count and total votes received. Click a row to filter the question
+  list to that author (combines with the Open/Answered/All tabs and search).
+  Each row has a **Mute** button: muted authors' questions are hidden from the
+  audience (the host still sees them, dimmed, and can unmute). Mutes are stored
+  at `t/<thread>/meta/mutedAuthors` and are client-enforced.
 - **Expiring threads** — when creating a thread, the host picks a lifetime:
   1 hour, 24 hours, 7 days, or never. The thread view shows a live countdown.
   Expired or closed threads are read-only (posting and voting disabled, posts
   still readable).
 
 All moderation state (`st/` nodes, `meta.discussingKey`, `meta.slowModeSec`,
-`meta.title`, `meta.desc`, `a/` author ids) is **additive**: rooms created by
-older versions keep working, they just don't have the new fields.
+`meta.title`, `meta.desc`, `meta.mutedAuthors`, `a/` author ids) is **additive**:
+rooms created by older versions keep working, they just don't have the new fields.
 
+> **Pseudonymity model (read this):** OpenMic is *pseudonymous*, not
+> unlinkably anonymous. Your browser gets a random id (`rg_vid` in
+> localStorage); every question you ask is stamped with it (at
+> `t/<thread>/a/<postKey>`) and deterministically mapped to a public
+> pseudonym like "Clever Fox-7Q2" so the app and host can correlate which
+> questions came from the same sender. The audience never sees your real
+> identity — but anyone who can read the Gun graph (it's decentralized and
+> public to peers) can correlate a browser's posts, and clearing localStorage
+> gives you a fresh identity. If you need true unlinkability, don't rely on
+> this.
+>
 > **Client-enforced caveat:** Gun has no server-side TTL or auth, so expiry,
-> close, slow mode, hiding, and flagging are UX features enforced by each
+> close, slow mode, hiding, muting, and flagging are UX features enforced by each
 > client — a modified client could still read/write. Treat them as
 > moderation conveniences, not a security boundary.
 

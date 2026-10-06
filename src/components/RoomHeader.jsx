@@ -1,8 +1,10 @@
 import { BellIcon, DownloadIcon, EditIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import {
+  Avatar,
   Badge,
   Box,
   Button,
+  Collapse,
   HStack,
   IconButton,
   Input,
@@ -14,9 +16,10 @@ import {
 } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import React from "react";
-import { downloadCSV, fmtCountdown } from "../libs/helpers";
+import { avatarFor, downloadCSV, fmtCountdown, pseudonym } from "../libs/helpers";
 import {
   countKeys,
+  setMutedAuthor,
   useAuthors,
   useNewQuestionNotify,
   usePosts,
@@ -25,6 +28,8 @@ import {
   useVotes,
 } from "../libs/hooks";
 import {
+  authorFilterAtom,
+  myOnlyAtom,
   searchAtom,
   sortModeAtom,
   statusFilterAtom,
@@ -41,26 +46,139 @@ const SLOW_OPTIONS = [
 
 const FilterTabs = () => {
   const [filter, setFilter] = useAtom(statusFilterAtom);
+  const [myOnly, setMyOnly] = useAtom(myOnlyAtom);
+  const [, setAuthorFilter] = useAtom(authorFilterAtom);
   const tabs = [
     { id: 'open', label: '🟢 Open' },
     { id: 'answered', label: '✅ Answered' },
     { id: 'all', label: '📋 All' },
   ];
   return (
-    <HStack spacing={1} bg="whiteAlpha.100" p={1} borderRadius="xl">
-      {tabs.map((t) => (
+    <HStack spacing={1} flexWrap="wrap">
+      <HStack spacing={1} bg="whiteAlpha.100" p={1} borderRadius="xl">
+        {tabs.map((t) => (
+          <Button
+            key={t.id}
+            size="sm"
+            variant={filter === t.id ? 'solid' : 'ghost'}
+            colorScheme={filter === t.id ? 'purple' : 'gray'}
+            borderRadius="lg"
+            onClick={() => setFilter(t.id)}
+          >
+            {t.label}
+          </Button>
+        ))}
+      </HStack>
+      <Tooltip label="Show only the questions you asked">
         <Button
-          key={t.id}
           size="sm"
-          variant={filter === t.id ? 'solid' : 'ghost'}
-          colorScheme={filter === t.id ? 'purple' : 'gray'}
+          variant={myOnly ? 'solid' : 'ghost'}
+          colorScheme={myOnly ? 'cyan' : 'gray'}
           borderRadius="lg"
-          onClick={() => setFilter(t.id)}
+          onClick={() => {
+            setMyOnly(!myOnly);
+            if (!myOnly) setAuthorFilter(null); // mutually exclusive with author filter
+          }}
         >
-          {t.label}
+          🙋 Mine
         </Button>
-      ))}
+      </Tooltip>
     </HStack>
+  );
+};
+
+// Host-only authors panel: distinct pseudonymous authors with per-author
+// counts; click a row to filter the question list, mute to hide their posts
+// from the audience (client-enforced, like all host controls).
+const AuthorsPanel = ({ thread, posts, votes, authors, mutedMap }) => {
+  const [open, setOpen] = React.useState(false);
+  const [authorFilter, setAuthorFilter] = useAtom(authorFilterAtom);
+  const [, setMyOnly] = useAtom(myOnlyAtom);
+
+  const rows = React.useMemo(() => {
+    const by = {};
+    posts.forEach((p) => {
+      const id = authors[p.key];
+      if (!id) return;
+      if (!by[id]) by[id] = { id, questions: 0, votes: 0 };
+      by[id].questions += 1;
+      by[id].votes += countKeys(votes[p.key]);
+    });
+    return Object.values(by).sort(
+      (a, b) => b.questions - a.questions || b.votes - a.votes
+    );
+  }, [posts, votes, authors]);
+
+  if (!rows.length) return null;
+
+  return (
+    <Box>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        👥 Authors ({rows.length}) {open ? '▾' : '▸'}
+      </Button>
+      <Collapse in={open} animateOpacity>
+        <VStack align="stretch" spacing={1} mt={2} layerStyle="glass" p={2} borderRadius="xl">
+          {rows.map((r) => {
+            const av = avatarFor(r.id);
+            const muted = !!mutedMap[r.id];
+            const active = authorFilter === r.id;
+            return (
+              <HStack
+                key={r.id}
+                w="100%"
+                justify="space-between"
+                p={2}
+                borderRadius="lg"
+                bg={active ? 'whiteAlpha.200' : undefined}
+                _hover={{ bg: 'whiteAlpha.100' }}
+                cursor="pointer"
+                onClick={() => {
+                  setAuthorFilter(active ? null : r.id);
+                  setMyOnly(false);
+                }}
+              >
+                <HStack spacing={2} minW={0}>
+                  <Avatar
+                    size="xs"
+                    bg={`${av.color}.500`}
+                    icon={<Text fontSize="sm">{av.emoji}</Text>}
+                  />
+                  <VStack align="start" spacing={0} minW={0}>
+                    <Text fontSize="sm" fontWeight="semibold" isTruncated>
+                      {pseudonym(r.id)}
+                    </Text>
+                    <Text fontSize="xs" opacity={0.6}>
+                      {r.questions} question{r.questions !== 1 ? 's' : ''} · {r.votes} vote{r.votes !== 1 ? 's' : ''}
+                    </Text>
+                  </VStack>
+                  {muted && <Badge colorScheme="red">muted</Badge>}
+                </HStack>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorScheme={muted ? 'green' : 'red'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMutedAuthor(thread, r.id, !muted);
+                  }}
+                >
+                  {muted ? 'Unmute' : 'Mute'}
+                </Button>
+              </HStack>
+            );
+          })}
+          <Text fontSize="xs" opacity={0.55} px={2} pb={1}>
+            Muting hides an author&apos;s questions from the audience (host still sees them, dimmed).
+            Client-enforced — a modified client could still read them.
+          </Text>
+        </VStack>
+      </Collapse>
+    </Box>
   );
 };
 
@@ -120,7 +238,7 @@ const RoomHeader = () => {
 
   const exportCSV = () => {
     const rows = [
-      ['question', 'votes', 'status', 'flags', 'asked_at'],
+      ['question', 'author', 'votes', 'status', 'flags', 'asked_at'],
       ...posts.map((p) => {
         const st = status[p.key] || {};
         const flagN = countKeys(st.flags);
@@ -128,6 +246,7 @@ const RoomHeader = () => {
         const ts = Number(String(p.key).split('-')[0]);
         return [
           String(p.text),
+          pseudonym(authors[p.key]),
           String(countKeys(votes[p.key])),
           stLabel,
           String(flagN),
@@ -295,6 +414,17 @@ const RoomHeader = () => {
             </>
           )}
         </HStack>
+
+        {/* Host: authors panel (pseudonymity + mute) */}
+        {isHost && (
+          <AuthorsPanel
+            thread={thread}
+            posts={posts}
+            votes={votes}
+            authors={authors}
+            mutedMap={meta.mutedAuthors || {}}
+          />
+        )}
       </VStack>
     </Box>
   );

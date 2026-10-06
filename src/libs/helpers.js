@@ -1,4 +1,4 @@
-// Small shared helpers: anonymous avatars, duplicate detection, CSV export, beeps.
+// Small shared helpers: anonymous avatars, pseudonyms, duplicate detection, CSV export, beeps.
 
 const EMOJIS = [
   '🦊', '🐼', '🦁', '🐸', '🦄', '🐝', '🦋', '🐙',
@@ -9,17 +9,47 @@ const COLORS = [
   'blue', 'cyan', 'purple', 'pink',
 ];
 
-// Deterministic friendly avatar (emoji + color) derived from an id hash.
-export const avatarFor = (id) => {
+// Deterministic 32-bit hash of a string id.
+const hashStr = (id) => {
   const s = String(id || 'anon');
   let h = 0;
   for (let i = 0; i < s.length; i++) {
     h = (h * 31 + s.charCodeAt(i)) >>> 0;
   }
+  return h;
+};
+
+// Deterministic friendly avatar (emoji + color) derived from an id hash.
+export const avatarFor = (id) => {
+  const h = hashStr(id);
   return {
     emoji: EMOJIS[h % EMOJIS.length],
     color: COLORS[(h >>> 4) % COLORS.length],
   };
+};
+
+const PSEUDO_ADJ = [
+  'Clever', 'Brave', 'Curious', 'Witty', 'Mellow', 'Nimble',
+  'Quiet', 'Bold', 'Cosmic', 'Sunny', 'Lunar', 'Neon',
+  'Amber', 'Silent', 'Rapid', 'Gentle', 'Peppy', 'Sly',
+];
+const PSEUDO_NOUN = [
+  'Fox', 'Panda', 'Lion', 'Frog', 'Unicorn', 'Bee',
+  'Butterfly', 'Octopus', 'Owl', 'Turtle', 'Flamingo', 'Whale',
+  'Parrot', 'Squirrel', 'Hedgehog', 'Dolphin', 'Badger', 'Crane',
+];
+
+// Stable pseudonym for an anonymous author id, e.g. "Clever Fox-7Q2".
+// Deterministic — same browser always gets the same name, and the app/host
+// can correlate a sender's posts. It is NOT unlinkable anonymity: anyone
+// reading the Gun graph can see the raw author ids (see README).
+export const pseudonym = (id) => {
+  if (!id) return 'Anonymous';
+  const h = hashStr(id);
+  const adj = PSEUDO_ADJ[h % PSEUDO_ADJ.length];
+  const noun = PSEUDO_NOUN[(h >>> 5) % PSEUDO_NOUN.length];
+  const tag = ((h >>> 10) % 46656).toString(36).toUpperCase().padStart(3, '0');
+  return `${adj} ${noun}-${tag}`;
 };
 
 const tokenize = (t) =>
