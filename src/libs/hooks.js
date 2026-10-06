@@ -1,6 +1,8 @@
 import React from 'react';
+import { useAtom } from 'jotai';
 import gun from './gun';
 import { playBeep } from './helpers';
+import { hostKeyBumpAtom } from './jotaiAtoms';
 
 export const useFocus = () => {
   const htmlElRef = React.useRef(null)
@@ -79,14 +81,19 @@ export const useThreadMeta = (thread) => {
   const [loaded, setLoaded] = React.useState(false);
   const [grace, setGrace] = React.useState(false);
   const [hostId, setHostId] = React.useState(null);
+  const [bump, setBump] = useAtom(hostKeyBumpAtom);
+
+  // Host key lives in localStorage. The bump atom refreshes every
+  // useThreadMeta instance when claimHost() is called from any of them.
+  React.useEffect(() => {
+    setHostId(getStoredHostId(thread));
+  }, [thread, bump]);
 
   React.useEffect(() => {
     setMeta(null);
     setLoaded(false);
     setGrace(false);
-    setHostId(null);
     if (!thread) return;
-    setHostId(getStoredHostId(thread));
     const g = setTimeout(() => setGrace(true), 1500); // let network data arrive first
     const fallback = setTimeout(() => setLoaded(true), 4000); // .on may never fire for empty nodes
     const node = gun.get(`t/${thread}/meta`);
@@ -104,6 +111,7 @@ export const useThreadMeta = (thread) => {
             desc: d.desc || null,
             discussingKey: d.discussingKey || null,
             slowModeSec: d.slowModeSec || 0,
+            moderated: !!d.moderated,
             mutedAuthors: parseMutedAuthors(d),
           }
         : null);
@@ -136,7 +144,17 @@ export const useThreadMeta = (thread) => {
     if (thread) gun.get(`t/${thread}/meta`).put(patch);
   };
 
-  return { meta, loaded, isHost, expired, closed, readOnly, needsCreation, createThread, updateMeta };
+  const claimHost = (id) => {
+    if (!thread) return;
+    const clean = String(id || '').trim();
+    if (!clean) return;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(`rg_host_${thread}`, clean);
+    }
+    setBump((b) => b + 1); // refresh hostId in every useThreadMeta instance
+  };
+
+  return { meta, loaded, isHost, expired, closed, readOnly, needsCreation, createThread, updateMeta, hostId, claimHost };
 }
 
 // Mute/unmute an author for a thread (host only, client-enforced like all
@@ -154,10 +172,11 @@ export const setMutedAuthor = (thread, voterId, muted) => {
 
 // ---- Posts / votes / status / authors ----
 
-// 'meta', 'v', 'st', 'a' are sub-nodes of a thread (host meta, vote tallies,
-// post status, author ids) — they show up in the parent's .on() data but are
-// not posts. Adding 'st'/'a' keeps old + new threads both working.
-const SKIP_KEYS = new Set(['_', 'meta', 'v', 'st', 'a']);
+// 'meta', 'v', 'st', 'a', 'p', 'r' are sub-nodes of a thread (host meta, vote
+// tallies, post status, author ids, moderation-pending posts, host replies) —
+// they show up in the parent's .on() data but are not posts. Adding 'p'/'r'
+// keeps old + new threads both working.
+const SKIP_KEYS = new Set(['_', 'meta', 'v', 'st', 'a', 'p', 'r']);
 
 const parsePosts = (d) =>
   d && Object.entries(d)
@@ -321,4 +340,100 @@ export const useNewQuestionNotify = (thread) => {
   };
 
   return { enabled, supported, toggle };
+};
+
+// ---- Pre-moderation queue ----
+
+// Pending posts awaiting host approval at t/<thread>/p/<postKey> = text.
+// Only used when meta.moderated is on; audience posts go here instead of
+// the main node. Author ids are still recorded at a/<postKey>.
+export const usePending = (thread) => {
+  const [pending, setPending] = React.useState([]);
+  React.useEffect(() => {
+    setPending([]);
+    if (!thread) return;
+    const node = gun.get(`t/${thread}/p`);
+    node.on((d) => {
+      if (!d) {
+        setPending([]);
+        return;
+      }
+      setPending(
+        Object.entries(d)
+          .map(([k, v]) => (k === '_' ? null : { key: k, text: v }))
+          .filter(Boolean)
+      );
+    });
+    return () => node.off();
+  }, [thread]);
+  return pending;
+};
+
+// Host approves a pending post: copy it into the main thread node (votes,
+// flags, answered then apply to it) and remove it from the queue.
+export const approvePending = (thread, key, text) => {
+  if (!thread || !key) return;
+  gun.get(`t/${thread}`).put({ [key]: text });
+  gun.get(`t/${thread}/p`).get(key).put(null);
+};
+
+// Host rejects a pending post: drop it from the queue and clear its author stamp.
+export const rejectPending = (thread, key) => {
+  if (!thread || !key) return;
+  gun.get(`t/${thread}/p`).get(key).put(null);
+  gun.get(`t/${thread}/a`).get(key).put(null);
+};
+
+// ---- Host replies (visible answers) ----
+
+// Replies live at t/<thread>/r/<postKey>/<replyKey> = text (one level only).
+// Host-only writes, client-enforced like all host controls.
+export const useReplies = (thread) => {
+  const [replies, setReplies] = React.useState({});
+  React.useEffect(() => {
+    setReplies({});
+    if (!thread) return;
+    const node = gun.get(`t/${thread}/r`);
+    node.on((d) => {
+      const out = {};
+      if (d) {
+        Object.entries(d).forEach(([pk, rv]) => {
+          if (pk === '_' || !rv || typeof rv !== 'object') return;
+          const list = Object.entries(rv)
+            .map(([rk, text]) => (rk === '_' ? null : { key: rk, text }))
+            .filter(Boolean)
+            .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+          if (list.length) out[pk] = list;
+        });
+      }
+      setReplies(out);
+    });
+    return () => node.off();
+  }, [thread]);
+  return replies;
+};
+
+export const addReply = (thread, postKey, replyKey, text) => {
+  if (!thread || !postKey || !replyKey || !text) return;
+  gun.get(`t/${thread}/r`).get(postKey).put({ [replyKey]: text });
+};
+
+export const deleteReply = (thread, postKey, replyKey) => {
+  if (!thread || !postKey || !replyKey) return;
+  gun.get(`t/${thread}/r`).get(postKey).get(replyKey).put(null);
+};
+
+// ---- Merge duplicates ----
+
+// Marks sourceKey as merged into targetKey (st/<sourceKey> = {mergedInto}).
+// Gun merges objects on put, so existing status fields (answered, flags)
+// are preserved.
+export const mergeInto = (thread, sourceKey, targetKey) => {
+  if (!thread || !sourceKey || !targetKey || sourceKey === targetKey) return;
+  gun.get(`t/${thread}/st`).get(sourceKey).put({ mergedInto: targetKey });
+};
+
+export const unmerge = (thread, sourceKey) => {
+  if (!thread || !sourceKey) return;
+  gun.get(`t/${thread}/st`).get(sourceKey).get('mergedInto').put(null);
 };

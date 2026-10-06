@@ -16,12 +16,15 @@ import {
 } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import React from "react";
-import { avatarFor, downloadCSV, fmtCountdown, pseudonym } from "../libs/helpers";
+import { avatarFor, downloadCSV, fmtCountdown, pseudonym, timeAgo } from "../libs/helpers";
 import {
+  approvePending,
   countKeys,
+  rejectPending,
   setMutedAuthor,
   useAuthors,
   useNewQuestionNotify,
+  usePending,
   usePosts,
   usePostStatus,
   useThreadMeta,
@@ -187,17 +190,23 @@ const RoomHeader = () => {
   const [thread] = useAtom(threadIdAtom);
   const [sortMode, setSortMode] = useAtom(sortModeAtom);
   const [search, setSearch] = useAtom(searchAtom);
-  const { meta, isHost, expired, closed, updateMeta } = useThreadMeta(thread);
+  const { meta, isHost, expired, closed, updateMeta, hostId, claimHost } = useThreadMeta(thread);
   const posts = usePosts(thread, null);
   const votes = useVotes(thread);
   const status = usePostStatus(thread);
   const authors = useAuthors(thread);
+  const pending = usePending(thread);
   const notify = useNewQuestionNotify(thread);
   const toast = useToast();
 
   const [editing, setEditing] = React.useState(false);
   const [titleDraft, setTitleDraft] = React.useState('');
   const [descDraft, setDescDraft] = React.useState('');
+  const [keyOpen, setKeyOpen] = React.useState(false);
+  const [claimOpen, setClaimOpen] = React.useState(false);
+  const [claimDraft, setClaimDraft] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+  const [pendingOpen, setPendingOpen] = React.useState(false);
   const [, force] = React.useReducer((x) => x + 1, 0);
 
   // re-render the countdown text
@@ -242,7 +251,13 @@ const RoomHeader = () => {
       ...posts.map((p) => {
         const st = status[p.key] || {};
         const flagN = countKeys(st.flags);
-        const stLabel = st.answered ? 'answered' : st.hidden || flagN >= 3 ? 'hidden' : 'open';
+        const stLabel = st.mergedInto
+          ? 'merged'
+          : st.answered
+            ? 'answered'
+            : st.hidden || flagN >= 3
+              ? 'hidden'
+              : 'open';
         const ts = Number(String(p.key).split('-')[0]);
         return [
           String(p.text),
@@ -278,6 +293,41 @@ const RoomHeader = () => {
   const saveTitleDesc = () => {
     updateMeta({ title: titleDraft.trim() || null, desc: descDraft.trim() || null });
     setEditing(false);
+  };
+
+  const copyHostKey = async () => {
+    if (!hostId) return;
+    try {
+      await navigator.clipboard.writeText(hostId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast({ title: 'Copy failed — select the key manually', status: 'warning', duration: 2000 });
+    }
+  };
+
+  const doClaimHost = () => {
+    if (!claimDraft.trim()) return;
+    claimHost(claimDraft);
+    setClaimDraft('');
+    setClaimOpen(false);
+    toast({
+      title: 'Host key saved 🔑',
+      description: 'If the key matches this room, host controls are now unlocked.',
+      status: 'info',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const doApprove = (key, text) => {
+    approvePending(thread, key, text);
+    toast({ title: 'Question approved ✅', status: 'success', duration: 1500, isClosable: true });
+  };
+
+  const doReject = (key) => {
+    rejectPending(thread, key);
+    toast({ title: 'Question rejected', status: 'info', duration: 1500, isClosable: true });
   };
 
   return (
@@ -348,6 +398,9 @@ const RoomHeader = () => {
           {meta.slowModeSec > 0 && (
             <Badge fontSize="xs" px={2} py={1} colorScheme="yellow">🐢 slow mode {meta.slowModeSec}s</Badge>
           )}
+          {meta.moderated && (
+            <Badge fontSize="xs" px={2} py={1} colorScheme="orange">🛡 questions reviewed by host</Badge>
+          )}
         </HStack>
 
         {/* Search / sort / filter */}
@@ -393,6 +446,46 @@ const RoomHeader = () => {
           <ShareQR thread={thread} />
           {isHost && (
             <>
+              <Tooltip label="New questions need your approval before going live">
+                <Button
+                  size="sm"
+                  variant={meta.moderated ? 'solid' : 'outline'}
+                  colorScheme={meta.moderated ? 'orange' : 'gray'}
+                  onClick={() => updateMeta({ moderated: !meta.moderated })}
+                >
+                  🛡 {meta.moderated ? 'Moderation on' : 'Pre-moderation'}
+                </Button>
+              </Tooltip>
+              {pending.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="orange"
+                  onClick={() => setPendingOpen(!pendingOpen)}
+                >
+                  ⏳ Pending review ({pending.length})
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setKeyOpen(!keyOpen); setClaimOpen(false); }}
+              >
+                🔑 Host key
+              </Button>
+            </>
+          )}
+          {!isHost && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { setClaimOpen(!claimOpen); setKeyOpen(false); }}
+            >
+              🔑 Have a host key?
+            </Button>
+          )}
+          {isHost && (
+            <>
               <Select
                 value={meta.slowModeSec || 0}
                 onChange={(e) => updateMeta({ slowModeSec: Number(e.target.value) })}
@@ -414,6 +507,110 @@ const RoomHeader = () => {
             </>
           )}
         </HStack>
+
+        {/* Host access panels: host key / claim host */}
+        {isHost && (
+          <Collapse in={keyOpen} animateOpacity>
+            <Box layerStyle="glass" p={3} borderRadius="xl">
+              <Text fontSize="sm" fontWeight="bold" mb={2}>🔑 Your host key</Text>
+              <HStack>
+                <Input
+                  value={hostId || ''}
+                  isReadOnly
+                  size="sm"
+                  fontFamily="mono"
+                  onFocus={(e) => e.target.select()}
+                />
+                <Button size="sm" onClick={copyHostKey}>
+                  {copied ? 'Copied!' : 'Copy'}
+                </Button>
+              </HStack>
+              <Text fontSize="xs" opacity={0.7} mt={2} lineHeight="1.5">
+                This key is the only proof that you&apos;re the host. <b>Save it somewhere safe</b> —
+                enter it on another device to regain host access, or share it with someone to make
+                them a co-host. Anyone holding this key can moderate the room. It lives in this
+                browser&apos;s localStorage — clearing site data orphans the room unless you saved the key.
+                (Client-enforced: anyone who can write to the Gun graph could overwrite the host id
+                directly — treat the key as a shared secret, not cryptographic auth.)
+              </Text>
+            </Box>
+          </Collapse>
+        )}
+        {!isHost && (
+          <Collapse in={claimOpen} animateOpacity>
+            <Box layerStyle="glass" p={3} borderRadius="xl">
+              <Text fontSize="sm" fontWeight="bold" mb={2}>🔑 Claim host access</Text>
+              <HStack>
+                <Input
+                  value={claimDraft}
+                  onChange={(e) => setClaimDraft(e.target.value)}
+                  placeholder="Paste the room's host key…"
+                  size="sm"
+                  fontFamily="mono"
+                  onKeyDown={(e) => { if (e.key === 'Enter') doClaimHost(); }}
+                />
+                <Button size="sm" colorScheme="purple" onClick={doClaimHost} isDisabled={!claimDraft.trim()}>
+                  Claim host
+                </Button>
+              </HStack>
+              <Text fontSize="xs" opacity={0.6} mt={2}>
+                Entering the room&apos;s host key restores host controls in this browser.
+                Ask the original host (or a co-host) for the key.
+              </Text>
+            </Box>
+          </Collapse>
+        )}
+
+        {/* Pending moderation queue */}
+        {isHost && pendingOpen && (
+          <Box layerStyle="glass" p={3} borderRadius="xl">
+            <Text fontSize="sm" fontWeight="bold" mb={2}>
+              ⏳ Pending review ({pending.length})
+            </Text>
+            {readOnly && (
+              <Text fontSize="xs" color="orange.300" mb={2}>
+                Room is read-only — approvals are disabled, but you can still reject.
+              </Text>
+            )}
+            <VStack align="stretch" spacing={2}>
+              {pending.map((item) => (
+                <HStack
+                  key={item.key}
+                  justify="space-between"
+                  align="start"
+                  bg="whiteAlpha.50"
+                  p={2}
+                  borderRadius="lg"
+                >
+                  <Box minW={0} flex={1}>
+                    <Text fontSize="sm" wordBreak="break-word">{String(item.text)}</Text>
+                    <Text fontSize="xs" opacity={0.6} mt={0.5}>
+                      {pseudonym(authors[item.key])} · {timeAgo(Number(String(item.key).split('-')[0]))}
+                    </Text>
+                  </Box>
+                  <HStack flexShrink={0}>
+                    <Button
+                      size="xs"
+                      colorScheme="green"
+                      onClick={() => doApprove(item.key, String(item.text))}
+                      isDisabled={readOnly}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      colorScheme="red"
+                      onClick={() => doReject(item.key)}
+                    >
+                      Reject
+                    </Button>
+                  </HStack>
+                </HStack>
+              ))}
+            </VStack>
+          </Box>
+        )}
 
         {/* Host: authors panel (pseudonymity + mute) */}
         {isHost && (

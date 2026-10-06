@@ -81,6 +81,11 @@ export const findSimilarPost = (text, posts) => {
   return best;
 };
 
+// Unique key for posts/replies: ms timestamp + randomness. Unix-seconds
+// collide when two writes land in the same second, silently overwriting.
+export const uniqueKey = () =>
+  `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 export const timeAgo = (ts) => {
   let ms = Number(ts);
   if (Number.isNaN(ms) || ms <= 0) return 'just now';

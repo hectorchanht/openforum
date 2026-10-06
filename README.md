@@ -71,13 +71,40 @@ Threads double as live Q&A rooms:
   Each row has a **Mute** button: muted authors' questions are hidden from the
   audience (the host still sees them, dimmed, and can unmute). Mutes are stored
   at `t/<thread>/meta/mutedAuthors` and are client-enforced.
+- **Host replies (visible answers)** — the host can reply to any question; replies
+  render threaded under the question card for everyone, with a HOST badge. One
+  level only (no nested replies). Stored at `t/<thread>/r/<postKey>/<replyKey>`,
+  host-only writes (client-enforced, same trust model as pin/delete).
+- **Host key / co-hosts** — the host id lives in `localStorage` (`rg_host_<thread>`),
+  so clearing site data orphans the room. The room header's **🔑 Host key** panel
+  shows the key with a copy button: save it, enter it on another device to regain
+  host (**🔑 Have a host key?** claim box), or share it to add a co-host. Anyone
+  holding the key can moderate the room. Note: the key is a *shared secret*, not
+  cryptographic auth — any client that can write to the Gun graph could overwrite
+  `meta.hostId` directly (last-writer-wins), so treat it like a password.
+- **Pre-moderation mode** — host toggle (`meta.moderated`). When on, audience
+  questions go to a pending queue (`t/<thread>/p/<postKey>`) instead of the visible
+  list; the asker gets a "Sent for review 👀" toast and the host gets a
+  "⏳ Pending review (n)" queue with Approve / Reject per item. Approving copies the
+  text into the main node (votes/flags/answered then apply); rejecting drops it.
+  Author ids are still recorded at `a/<postKey>` so the host sees who asked.
+  Client-enforced.
+- **Merge duplicates** — the host can merge a question into another ("🔀 Merge" →
+  searchable picker). The merged question disappears from the list and its votes
+  are added to the target's displayed total (stored at `st/<sourceKey>` as
+  `{mergedInto: <targetKey>}`). The target card shows a "🔀 +N merged" badge for
+  the host — click it to see the merged questions and Unmerge them. Edge case: if
+  the target is deleted, merged sources stay hidden from the audience; the host
+  still sees them flagged ("merged into a deleted question") with an Unmerge
+  button, so nothing is ever permanently stuck. Client-enforced.
 - **Expiring threads** — when creating a thread, the host picks a lifetime:
   1 hour, 24 hours, 7 days, or never. The thread view shows a live countdown.
   Expired or closed threads are read-only (posting and voting disabled, posts
   still readable).
 
-All moderation state (`st/` nodes, `meta.discussingKey`, `meta.slowModeSec`,
-`meta.title`, `meta.desc`, `meta.mutedAuthors`, `a/` author ids) is **additive**:
+All moderation state (`st/` nodes, `r/` replies, `p/` pending, `meta.discussingKey`,
+`meta.slowModeSec`, `meta.moderated`, `meta.title`, `meta.desc`,
+`meta.mutedAuthors`, `a/` author ids, `st/<key>.mergedInto`) is **additive**:
 rooms created by older versions keep working, they just don't have the new fields.
 
 > **Pseudonymity model (read this):** OpenMic is *pseudonymous*, not
@@ -92,9 +119,11 @@ rooms created by older versions keep working, they just don't have the new field
 > this.
 >
 > **Client-enforced caveat:** Gun has no server-side TTL or auth, so expiry,
-> close, slow mode, hiding, muting, and flagging are UX features enforced by each
-> client — a modified client could still read/write. Treat them as
-> moderation conveniences, not a security boundary.
+> close, slow mode, hiding, muting, flagging, pre-moderation, merging, and host
+> replies are UX features enforced by each client — a modified client could still
+> read/write. The host key is a shared secret, not cryptographic auth: anyone who
+> can write to the graph can overwrite `meta.hostId` (last-writer-wins) and seize
+> host. Treat all of it as moderation conveniences, not a security boundary.
 
 ## Getting started
 

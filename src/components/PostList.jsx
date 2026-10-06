@@ -1,11 +1,18 @@
-import { CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
-import { Avatar, Badge, Box, HStack, IconButton, Text, Tooltip, VStack } from "@chakra-ui/react";
+import { ChatIcon, CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
+import {
+  Avatar, Badge, Box, Button, HStack, IconButton, Input, Modal, ModalBody,
+  ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Text, Textarea,
+  Tooltip, VStack,
+} from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAtom } from "jotai";
 import React from "react";
 import gun from "../libs/gun";
-import { avatarFor, pseudonym, timeAgo } from "../libs/helpers";
-import { countKeys, getVoterId, useAuthors, usePosts, usePostStatus, useThreadMeta, useVotes } from "../libs/hooks";
+import { avatarFor, pseudonym, timeAgo, uniqueKey } from "../libs/helpers";
+import {
+  addReply, countKeys, deleteReply, getVoterId, mergeInto, unmerge,
+  useAuthors, usePosts, usePostStatus, useReplies, useThreadMeta, useVotes,
+} from "../libs/hooks";
 import { aliasAtom, authorFilterAtom, myOnlyAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 const MotionBox = motion(Box);
@@ -17,12 +24,24 @@ const QuestionCard = ({
   status, flagCount, hidden,
   onToggleAnswered, onToggleHidden, onFlag, onTogglePin, onDelete, onSpotlight,
   isMine, mutedAuthor,
+  replies, onSendReply, onDeleteReply,
+  mergedCount, onOpenMerge, onOpenManageMerged, orphanedMerge, onUnmerge,
 }) => {
   const pinned = !!(thread && meta && meta.pinnedKey === post.key);
   const answered = !!status?.answered;
   const spotlighted = !!(thread && meta && meta.discussingKey === post.key);
   const av = avatarFor(authorId);
   const name = authorId ? pseudonym(authorId) : null;
+  const [replyOpen, setReplyOpen] = React.useState(false);
+  const [replyText, setReplyText] = React.useState('');
+
+  const sendReply = () => {
+    const text = replyText.trim();
+    if (!text) return;
+    onSendReply(post.key, uniqueKey(), text);
+    setReplyText('');
+    setReplyOpen(false);
+  };
 
   return (
     <MotionBox
@@ -92,6 +111,21 @@ const QuestionCard = ({
             {hidden && (
               <Badge colorScheme="red">hidden{flagCount >= FLAG_THRESHOLD ? ` · ${flagCount} flags` : ''}</Badge>
             )}
+            {orphanedMerge && isHost && (
+              <Badge colorScheme="orange">⚠ merged into a deleted question</Badge>
+            )}
+            {mergedCount > 0 && isHost && (
+              <Tooltip label="This question includes votes from merged duplicates — click to manage">
+                <Badge
+                  as="button"
+                  colorScheme="teal"
+                  cursor="pointer"
+                  onClick={onOpenManageMerged}
+                >
+                  🔀 +{mergedCount} merged
+                </Badge>
+              </Tooltip>
+            )}
           </HStack>
 
           <Text
@@ -104,8 +138,80 @@ const QuestionCard = ({
             {String(post.text)}
           </Text>
 
+          {/* Host replies — visible answers, threaded under the question */}
+          {replies && replies.length > 0 && (
+            <VStack align="stretch" spacing={1.5} pl={3} borderLeftWidth="2px" borderColor="purple.400">
+              {replies.map((r) => (
+                <HStack key={r.key} align="start" spacing={2}>
+                  <Badge colorScheme="purple" mt={1} flexShrink={0} fontSize="2xs">HOST</Badge>
+                  <Text fontSize="sm" flex={1} wordBreak="break-word" opacity={0.95}>
+                    {String(r.text)}
+                  </Text>
+                  {isHost && (
+                    <IconButton
+                      size="xs"
+                      variant="ghost"
+                      aria-label="delete reply"
+                      icon={<DeleteIcon />}
+                      color="red.400"
+                      onClick={() => onDeleteReply(post.key, r.key)}
+                    />
+                  )}
+                </HStack>
+              ))}
+            </VStack>
+          )}
+
           {thread && (
             <HStack spacing={1} flexWrap="wrap">
+              {isHost && !readOnly && (
+                replyOpen ? (
+                  <HStack align="flex-end" w="100%" spacing={2} mt={1}>
+                    <Textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write a reply as host… (Enter to send)"
+                      rows={2}
+                      fontSize="sm"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendReply();
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <VStack spacing={1}>
+                      <IconButton
+                        aria-label="send reply"
+                        icon={<CheckIcon />}
+                        colorScheme="purple"
+                        size="sm"
+                        onClick={sendReply}
+                        isDisabled={!replyText.trim()}
+                      />
+                      <IconButton
+                        aria-label="cancel reply"
+                        icon={<CloseIcon />}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setReplyOpen(false); setReplyText(''); }}
+                      />
+                    </VStack>
+                  </HStack>
+                ) : (
+                  <Tooltip label="Reply as host — visible to everyone">
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      leftIcon={<ChatIcon />}
+                      onClick={() => setReplyOpen(true)}
+                    >
+                      Reply
+                    </Button>
+                  </Tooltip>
+                )
+              )}
               {!isHost && !readOnly && (
                 <Tooltip label="Flag as inappropriate (3 flags hides it)">
                   <IconButton
@@ -138,6 +244,17 @@ const QuestionCard = ({
                       onClick={() => onSpotlight(post.key, spotlighted)}
                     />
                   </Tooltip>
+                  {!orphanedMerge && (
+                    <Tooltip label="Merge this duplicate into another question — its votes are added to the target">
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={onOpenMerge}
+                      >
+                        🔀 Merge…
+                      </Button>
+                    </Tooltip>
+                  )}
                   <Tooltip label={hidden ? 'Unhide' : 'Hide from audience'}>
                     <IconButton
                       size="xs" variant="ghost"
@@ -165,6 +282,18 @@ const QuestionCard = ({
                       onClick={() => onDelete(post.key)}
                     />
                   </Tooltip>
+                  {orphanedMerge && (
+                    <Tooltip label="This question was merged into a deleted one — unmerge to restore it">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        colorScheme="orange"
+                        onClick={() => onUnmerge(post.key)}
+                      >
+                        Unmerge
+                      </Button>
+                    </Tooltip>
+                  )}
                 </>
               )}
             </HStack>
@@ -172,6 +301,90 @@ const QuestionCard = ({
         </VStack>
       </HStack>
     </MotionBox>
+  );
+};
+
+// Merge picker modal — two modes:
+//   mode 'merge':  pick a target question for sourceKey to merge into
+//   mode 'manage': list questions merged into manageKey, with unmerge buttons
+const MergeModal = ({
+  isOpen, onClose, mode, candidates, mergedSources,
+  voteCountOf, onPickTarget, onUnmerge,
+}) => {
+  const [q, setQ] = React.useState('');
+  React.useEffect(() => { if (isOpen) setQ(''); }, [isOpen]);
+  const filtered = candidates.filter((c) =>
+    !q.trim() || String(c.text).toLowerCase().includes(q.trim().toLowerCase())
+  );
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior="inside">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader fontSize="md">
+          {mode === 'merge' ? '🔀 Merge into…' : '🔀 Merged questions'}
+        </ModalHeader>
+        <ModalCloseButton />
+        <ModalBody pb={6}>
+          {mode === 'merge' ? (
+            <VStack align="stretch" spacing={2}>
+              <Input
+                placeholder="Search questions…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                size="sm"
+              />
+              <Text fontSize="xs" opacity={0.65}>
+                The selected question disappears from the list; its votes are added to the target.
+              </Text>
+              {filtered.length === 0 && (
+                <Text fontSize="sm" opacity={0.6} textAlign="center" py={4}>
+                  No other questions to merge into.
+                </Text>
+              )}
+              {filtered.map((c) => (
+                <Button
+                  key={c.key}
+                  variant="ghost"
+                  justifyContent="flex-start"
+                  h="auto"
+                  py={2}
+                  whiteSpace="normal"
+                  textAlign="left"
+                  onClick={() => { onPickTarget(c.key); onClose(); }}
+                >
+                  <VStack align="start" spacing={0} w="100%">
+                    <Text fontSize="sm" noOfLines={2}>{String(c.text)}</Text>
+                    <Text fontSize="xs" opacity={0.6}>
+                      ▲ {voteCountOf(c.key)} votes{c.answered ? ' · ✓ answered' : ''}
+                    </Text>
+                  </VStack>
+                </Button>
+              ))}
+            </VStack>
+          ) : (
+            <VStack align="stretch" spacing={2}>
+              <Text fontSize="xs" opacity={0.65}>
+                These questions are merged into this one — their votes count toward its total.
+              </Text>
+              {mergedSources.length === 0 && (
+                <Text fontSize="sm" opacity={0.6} textAlign="center" py={4}>Nothing merged.</Text>
+              )}
+              {mergedSources.map((s) => (
+                <HStack key={s.key} justify="space-between" layerStyle="glass" p={2} borderRadius="lg">
+                  <VStack align="start" spacing={0} flex={1} minW={0}>
+                    <Text fontSize="sm" noOfLines={2}>{String(s.text)}</Text>
+                    <Text fontSize="xs" opacity={0.6}>▲ {voteCountOf(s.key)} votes</Text>
+                  </VStack>
+                  <Button size="xs" variant="outline" onClick={() => onUnmerge(s.key)}>
+                    Unmerge
+                  </Button>
+                </HStack>
+              ))}
+            </VStack>
+          )}
+        </ModalBody>
+      </ModalContent>
+    </Modal>
   );
 };
 
@@ -188,11 +401,33 @@ const PostList = () => {
   const votes = useVotes(thread);
   const status = usePostStatus(thread);
   const authors = useAuthors(thread);
+  const replies = useReplies(thread);
   const { meta, isHost, readOnly, updateMeta } = useThreadMeta(thread);
   const mine = getVoterId();
   const mutedMap = (thread && meta && meta.mutedAuthors) || {};
 
-  const voteCount = (key) => countKeys(votes[key]);
+  // Merge dialog: { mode: 'merge', sourceKey } | { mode: 'manage', manageKey }
+  const [mergeDlg, setMergeDlg] = React.useState(null);
+
+  // Merge resolution: st/<key>.mergedInto points at the merge target.
+  // Follow the chain to the root (cycle-guarded); merged sources hide from
+  // the list and their votes count toward the root's displayed total.
+  const mergedIntoOf = (key) => {
+    const st = status[key];
+    return st && typeof st === 'object' ? (st.mergedInto || null) : null;
+  };
+  const rootOf = (key) => {
+    let cur = key;
+    const seen = new Set([key]);
+    for (let i = 0; i < 50; i++) {
+      const into = mergedIntoOf(cur);
+      if (!into || seen.has(into)) break;
+      seen.add(into);
+      cur = into;
+    }
+    return cur;
+  };
+
   const hasVoted = (key) => {
     const o = votes[key];
     return !!(o && o[getVoterId()]);
@@ -240,14 +475,50 @@ const PostList = () => {
     updateMeta({ discussingKey: spotlighted ? null : key });
   };
 
+  const handleSendReply = (postKey, replyKey, text) => {
+    if (!thread || !isHost || readOnly) return;
+    addReply(thread, postKey, replyKey, text);
+  };
+
+  const handleDeleteReply = (postKey, replyKey) => {
+    if (!thread || !isHost) return;
+    deleteReply(thread, postKey, replyKey);
+  };
+
+  const handlePickTarget = (targetKey) => {
+    if (!thread || !isHost || !mergeDlg || mergeDlg.mode !== 'merge') return;
+    mergeInto(thread, mergeDlg.sourceKey, targetKey);
+  };
+
+  const handleUnmerge = (sourceKey) => {
+    if (!thread || !isHost) return;
+    unmerge(thread, sourceKey);
+  };
+
   const flagCountFor = (key) => countKeys(status[key]?.flags);
 
   // pinned first → sort mode → newest first
   // (post keys start with a ms timestamp, so key desc ≈ newest first)
-  const visible = React.useMemo(() => {
+  // Merged sources are hidden from the list (votes roll up into the root).
+  const { visible, mergedByTarget, voteCountOf, mergeCandidates } = React.useMemo(() => {
     const pinnedKey = thread && meta ? meta.pinnedKey : null;
     const q = search.trim().toLowerCase();
-    return posts
+    const postKeys = new Set(posts.map((p) => p.key));
+    const roots = {};
+    posts.forEach((p) => { roots[p.key] = rootOf(p.key); });
+    const mergedByTarget = {};
+    posts.forEach((p) => {
+      const r = roots[p.key];
+      if (r !== p.key) {
+        (mergedByTarget[r] = mergedByTarget[r] || []).push(p);
+      }
+    });
+    const voteCountOf = (key) => {
+      let n = thread ? countKeys(votes[key]) : 0;
+      (mergedByTarget[key] || []).forEach((s) => { n += countKeys(votes[s.key]); });
+      return n;
+    };
+    const list = posts
       .map((p) => {
         const st = status[p.key] || {};
         const flags = countKeys(st.flags);
@@ -255,18 +526,27 @@ const PostList = () => {
         const authorId = authors[p.key] || null;
         const isMine = !!authorId && authorId === mine;
         const mutedByHost = !!authorId && !!mutedMap[authorId];
+        const root = roots[p.key];
+        const isMergedAway = root !== p.key;
+        // A source whose target was deleted stays hidden from the audience,
+        // but the host sees it flagged so it can be unmerged — never stuck.
+        const orphanedMerge = isMergedAway && !postKeys.has(root);
         return {
           ...p,
-          voteCount: thread ? voteCount(p.key) : 0,
+          voteCount: voteCountOf(p.key),
           answered: !!st.answered,
           hidden,
           flagCount: flags,
           authorId,
           isMine,
           mutedByHost,
+          isMergedAway,
+          orphanedMerge,
+          mergedSources: mergedByTarget[p.key] || [],
         };
       })
       .filter((p) => {
+        if (p.isMergedAway && (!p.orphanedMerge || !isHost)) return false;
         if (p.hidden && !isHost) return false; // hidden from audience
         if (p.mutedByHost && !isHost) return false; // muted author: host-only view
         if (q && !String(p.text).toLowerCase().includes(q)) return false;
@@ -283,6 +563,14 @@ const PostList = () => {
         if (sortMode === 'top' && a.voteCount !== b.voteCount) return b.voteCount - a.voteCount;
         return a.key < b.key ? 1 : a.key > b.key ? -1 : 0;
       });
+    const mergeCandidates = posts
+      .filter((p) => roots[p.key] === p.key)
+      .map((p) => ({
+        key: p.key,
+        text: p.text,
+        answered: !!(status[p.key] || {}).answered,
+      }));
+    return { visible: list, mergedByTarget, voteCountOf, mergeCandidates };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posts, votes, status, authors, thread, meta, isHost, sortMode, statusFilter, search, myOnly, authorFilter, mine, mutedMap]);
 
@@ -345,9 +633,38 @@ const PostList = () => {
             onSpotlight={toggleSpotlight}
             isMine={p.isMine}
             mutedAuthor={p.mutedByHost && isHost}
+            replies={replies[p.key] || []}
+            onSendReply={handleSendReply}
+            onDeleteReply={handleDeleteReply}
+            mergedCount={p.mergedSources.length}
+            orphanedMerge={p.orphanedMerge}
+            onOpenMerge={() => setMergeDlg({ mode: 'merge', sourceKey: p.key })}
+            onOpenManageMerged={() => setMergeDlg({ mode: 'manage', manageKey: p.key })}
+            onUnmerge={handleUnmerge}
           />
         ))}
       </AnimatePresence>
+      <MergeModal
+        isOpen={!!mergeDlg}
+        onClose={() => setMergeDlg(null)}
+        mode={mergeDlg?.mode}
+        candidates={
+          mergeDlg?.mode === 'merge'
+            ? mergeCandidates.filter((c) => c.key !== mergeDlg.sourceKey)
+            : []
+        }
+        mergedSources={
+          mergeDlg?.mode === 'manage'
+            ? (mergedByTarget[mergeDlg.manageKey] || []).map((s) => ({
+                key: s.key,
+                text: s.text,
+              }))
+            : []
+        }
+        voteCountOf={voteCountOf}
+        onPickTarget={handlePickTarget}
+        onUnmerge={(k) => handleUnmerge(k)}
+      />
     </VStack>
   );
 };

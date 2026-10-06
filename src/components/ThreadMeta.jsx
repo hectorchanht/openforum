@@ -32,6 +32,8 @@ const ThreadMeta = () => {
         <Text fontSize="sm" opacity={0.8} mb={3}>
           <Text as="span" fontWeight="bold">t/{thread}</Text> has no host yet. Whoever starts it
           becomes the host — pin &amp; spotlight questions, mark them answered, export results.
+          <br />💡 After creating, open <b>🔑 Host key</b> in the room header and save it — it&apos;s the
+          only way to regain host on another device.
         </Text>
         <HStack flexWrap="wrap">
           <Select value={ttl} onChange={(e) => setTtl(Number(e.target.value))} maxW="190px">

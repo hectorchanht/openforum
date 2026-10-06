@@ -15,7 +15,7 @@ const AddPost = () => {
   const [value, setValue] = React.useState('');
   const [thread] = useAtom(threadIdAtom);
   const [alias] = useAtom(aliasAtom);
-  const { readOnly, expired, closed, meta } = useThreadMeta(thread);
+  const { readOnly, expired, closed, meta, isHost } = useThreadMeta(thread);
   const toast = useToast();
   const posts = usePosts(thread, alias);
 
@@ -26,6 +26,9 @@ const AddPost = () => {
       : null;
 
   const slowSec = thread && meta ? meta.slowModeSec || 0 : 0;
+  // Pre-moderation: when on, audience questions wait in the pending queue
+  // (t/<thread>/p) for host approval; the host's own posts go straight in.
+  const moderated = !!(thread && meta && meta.moderated && !isHost);
 
   const path = React.useMemo(
     () => thread
@@ -66,6 +69,11 @@ const AddPost = () => {
     const key = postKey();
     if (alias) {
       gun.user().get(path).put({ [key]: text });
+    } else if (thread && moderated) {
+      // Pre-moderation on: audience posts go to the pending queue instead of
+      // the visible node. Author id is still recorded (a/<key>) for the host.
+      gun.get(`t/${thread}/p`).put({ [key]: text });
+      gun.get(`t/${thread}/a`).get(key).put(getVoterId());
     } else {
       gun.get(path).put({ [key]: text });
       if (thread) {
@@ -80,7 +88,17 @@ const AddPost = () => {
     }
     setValue('');
     if (thread) {
-      toast({ title: 'Question posted 🎤', status: 'success', duration: 1500, isClosable: true });
+      if (moderated) {
+        toast({
+          title: 'Sent for review 👀',
+          description: 'The host will approve your question shortly.',
+          status: 'info',
+          duration: 2500,
+          isClosable: true,
+        });
+      } else {
+        toast({ title: 'Question posted 🎤', status: 'success', duration: 1500, isClosable: true });
+      }
     }
   }
 
@@ -123,6 +141,11 @@ const AddPost = () => {
       {slowSec > 0 && !readOnly && (
         <Text fontSize="xs" opacity={0.6} mt={1} px={1}>
           🐢 Slow mode: one question every {slowSec}s
+        </Text>
+      )}
+      {moderated && !readOnly && (
+        <Text fontSize="xs" opacity={0.6} mt={1} px={1}>
+          🛡 Pre-moderation is on — your question will be reviewed by the host before going live
         </Text>
       )}
     </Box>
