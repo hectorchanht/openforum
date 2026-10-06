@@ -19,12 +19,16 @@ const theme = extendTheme({
         color: props.colorMode === 'dark' ? 'gray.100' : 'gray.800',
       },
       // subtle dotted background texture
+      // overflowX clip: belt-and-braces against any horizontal overflow
+      // ever triggering mobile shrink-to-fit again (`clip` doesn't create a
+      // scroll container, so position:sticky keeps working).
       '#__next': {
         backgroundImage:
           props.colorMode === 'dark'
             ? 'radial-gradient(circle at 15% 0%, rgba(139,92,246,0.12), transparent 45%), radial-gradient(circle at 85% 10%, rgba(217,70,239,0.08), transparent 40%)'
             : 'none',
         minHeight: '100dvh',
+        overflowX: 'clip',
       },
     }),
   },

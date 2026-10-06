@@ -119,6 +119,7 @@ const AddPost = () => {
           isDisabled={readOnly}
           rows={2}
           fontSize="md"
+          minW={0}
           placeholder={disabledMsg || (thread ? 'Ask a question… (Enter to send)' : 'leave secrets here for people to find ~')}
         />
         <IconButton

@@ -77,7 +77,7 @@ const QuestionCard = ({
           </VStack>
         )}
 
-        <VStack align="stretch" flex={1} spacing={1.5}>
+        <VStack align="stretch" flex={1} minW={0} spacing={1.5}>
           <HStack spacing={2} flexWrap="wrap" fontSize="xs" opacity={0.9}>
             <Avatar
               size="xs"
@@ -144,7 +144,7 @@ const QuestionCard = ({
               {replies.map((r) => (
                 <HStack key={r.key} align="start" spacing={2}>
                   <Badge colorScheme="purple" mt={1} flexShrink={0} fontSize="2xs">HOST</Badge>
-                  <Text fontSize="sm" flex={1} wordBreak="break-word" opacity={0.95}>
+                  <Text fontSize="sm" flex={1} minW={0} wordBreak="break-word" opacity={0.95}>
                     {String(r.text)}
                   </Text>
                   {isHost && (

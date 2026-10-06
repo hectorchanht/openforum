@@ -356,7 +356,7 @@ const RoomHeader = () => {
             </VStack>
           ) : (
             <HStack align="start" justify="space-between">
-              <Box>
+              <Box minW={0}>
                 <Text fontSize="xl" fontWeight="extrabold" lineHeight="1.2">
                   {meta.title || `t/${thread}`}
                 </Text>
@@ -519,9 +519,10 @@ const RoomHeader = () => {
                   isReadOnly
                   size="sm"
                   fontFamily="mono"
+                  minW={0}
                   onFocus={(e) => e.target.select()}
                 />
-                <Button size="sm" onClick={copyHostKey}>
+                <Button size="sm" onClick={copyHostKey} flexShrink={0}>
                   {copied ? 'Copied!' : 'Copy'}
                 </Button>
               </HStack>
@@ -547,9 +548,10 @@ const RoomHeader = () => {
                   placeholder="Paste the room's host key…"
                   size="sm"
                   fontFamily="mono"
+                  minW={0}
                   onKeyDown={(e) => { if (e.key === 'Enter') doClaimHost(); }}
                 />
-                <Button size="sm" colorScheme="purple" onClick={doClaimHost} isDisabled={!claimDraft.trim()}>
+                <Button size="sm" colorScheme="purple" onClick={doClaimHost} isDisabled={!claimDraft.trim()} flexShrink={0}>
                   Claim host
                 </Button>
               </HStack>

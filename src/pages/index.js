@@ -45,6 +45,12 @@ const Hero = () => (
         }}
         boxShadow="0 8px 30px rgba(139,92,246,0.4)"
         mb={10}
+        /* wrap-friendly: long label must never force horizontal overflow */
+        whiteSpace="normal"
+        textAlign="center"
+        maxW="100%"
+        h="auto"
+        py={4}
       >
         🚀 Start a room — it takes 10 seconds
       </Button>

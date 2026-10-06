@@ -118,7 +118,7 @@ const Header = () => {
     // const deleteUser = () => gun.user().delete(username, password);
 
     return <>
-      <Text fontSize="sm" fontWeight="semibold" color="purple.300">
+      <Text fontSize="sm" fontWeight="semibold" color="purple.300" maxW="40vw" isTruncated>
         u/{gun.user()?.is?.alias}
       </Text>
       {/* <IconButton variant={"ghost"} onClick={deleteUser} icon={<DeleteIcon />} /> */}
@@ -130,12 +130,17 @@ const Header = () => {
 
   return (
     <Box as={"header"} mb={3} position="sticky" top={2} zIndex={20}>
+      {/* flexWrap: the row must never force horizontal overflow — on narrow
+          screens the room-entry cluster wraps below instead of squeezing the
+          whole page (mobile Chrome shrink-to-fit). */}
       <HStack
         p={2}
         pl={3}
         borderRadius="2xl"
         spacing={1}
         justifyContent="space-between"
+        flexWrap="wrap"
+        rowGap={2}
         layerStyle="glass"
       >
         <HStack spacing={1} flexShrink={0}>
@@ -156,15 +161,17 @@ const Header = () => {
                   <IconButton variant="ghost" onClick={exitThread} color="red.400" icon={<CloseIcon />} aria-label="exit room" />
                 </HStack>
               ) : (
-                <HStack spacing={1} flexWrap="wrap" justify="flex-end">
+                /* minW={0} + flex={1}: this cluster must shrink (never overflow)
+                   when the password field appears on narrow screens. */
+                <HStack spacing={1} flexWrap="wrap" justify="flex-end" flex={1} minW={0}>
                   <Input
                     ref={usernameRef}
                     value={username} width="auto" placeholder="room name"
                     onChange={setUsername} onKeyDown={handleEnterShortSecret}
-                    size="sm" maxW="150px" />
+                    size="sm" maxW="150px" minW={0} flexShrink={1} />
 
                   {username && username.length >= 4 && (
-                    <Input value={password} width="auto" onChange={setPassword} placeholder="password" type="password" size="sm" maxW="130px" />)}
+                    <Input value={password} width="auto" onChange={setPassword} placeholder="password" type="password" size="sm" maxW="130px" minW={0} flexShrink={1} />)}
 
                   <IconButton
                     aria-label={password.length >= 8 ? 'open holy page' : 'join room'}
@@ -175,7 +182,8 @@ const Header = () => {
                     variant="solid"
                     colorScheme={password.length >= 8 ? 'purple' : 'green'}
                     onClick={password.length >= 8 ? loginGun : setThread}
-                    icon={<ArrowRightIcon />} />
+                    icon={<ArrowRightIcon />}
+                    flexShrink={0} />
                 </HStack>
               ))}
       </HStack>

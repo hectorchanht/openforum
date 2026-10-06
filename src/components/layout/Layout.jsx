@@ -10,7 +10,11 @@ import Header from "./Header";
 const Layout = ({ children }) => {
   const [alertMsg, setAlertMsg] = useAtom(alertMsgAtom);
   return (
-    <Container maxW="960px" display="flex" flexDirection="column" minH="100dvh" pb={4}>
+    <Container maxW="960px" display="flex" flexDirection="column" minH="100dvh" pb={4} overflowX="clip">
+      {/* overflowX="clip": defensive guard — no single misbehaving element
+          can ever trigger mobile Chrome's shrink-to-fit again. `clip` (unlike
+          `hidden`) doesn't create a scroll container, so the sticky header
+          keeps working. */}
       <Head>
         {/* <!-- Primary Meta Tags --> */}
         <title>OpenMic — live anonymous Q&A for events</title>
