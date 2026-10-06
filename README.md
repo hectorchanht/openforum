@@ -101,6 +101,14 @@ Threads double as live Q&A rooms:
   1 hour, 24 hours, 7 days, or never. The thread view shows a live countdown.
   Expired or closed threads are read-only (posting and voting disabled, posts
   still readable).
+- **🧠 Thought Heap** — a private quick-capture scratchpad. Hit the 🧠 icon in
+  the header (count badge shows parked thoughts), type, Enter — the thought is
+  parked instantly, tagged with the room you were in. When it's your turn,
+  hit **→ Question** on any item: it loads into the composer as a *draft*
+  (never auto-posts) — navigating to the tagged room first if you're elsewhere.
+  Items can be edited inline, deleted, or cleared in bulk. **Heap items live in
+  localStorage (`openforum-heap`) only and are never written to the Gun graph —
+  half-formed thoughts stay on your device.**
 
 All moderation state (`st/` nodes, `r/` replies, `p/` pending, `meta.discussingKey`,
 `meta.slowModeSec`, `meta.moderated`, `meta.title`, `meta.desc`,

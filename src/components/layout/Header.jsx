@@ -7,6 +7,7 @@ import gun from "../../libs/gun";
 import { useFocus, useRelayOnline } from "../../libs/hooks";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
 import Logo from "../Logo";
+import ThoughtHeapButton from "../ThoughtHeap";
 
 const defaultUser = { username: '', password: '' };
 
@@ -199,6 +200,7 @@ const Header = () => {
         <HStack justifyContent="space-between" alignItems="center" w="100%" spacing={2}>
           <Logo size={30} wordmark onClick={exitThread} />
           <HStack spacing={0} flexShrink={0}>
+            <ThoughtHeapButton />
             <RelayStatus />
             <ToggleColor />
           </HStack>

@@ -5,7 +5,7 @@ import React from 'react';
 import gun from '../libs/gun';
 import { findSimilarPost } from '../libs/helpers';
 import { getVoterId, usePosts, useThreadMeta } from '../libs/hooks';
-import { aliasAtom, threadIdAtom } from "../libs/jotaiAtoms";
+import { aliasAtom, heapDraftAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 // Keys must be unique per post: unix-seconds collide when two posts land
 // in the same second, silently overwriting each other.
@@ -15,9 +15,19 @@ const AddPost = () => {
   const [value, setValue] = React.useState('');
   const [thread] = useAtom(threadIdAtom);
   const [alias] = useAtom(aliasAtom);
+  const [heapDraft, setHeapDraft] = useAtom(heapDraftAtom);
   const { readOnly, expired, closed, meta, isHost } = useThreadMeta(thread);
   const toast = useToast();
   const posts = usePosts(thread, alias);
+
+  // Thought Heap "→ Question": a promoted heap item arrives as a DRAFT —
+  // fill the composer for editing, never auto-post.
+  React.useEffect(() => {
+    if (heapDraft && typeof heapDraft.text === 'string') {
+      setValue(heapDraft.text);
+      setHeapDraft(null);
+    }
+  }, [heapDraft, setHeapDraft]);
 
   const disabledMsg = closed
     ? 'thread closed by host — read-only'
