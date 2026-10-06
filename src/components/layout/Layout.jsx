@@ -22,16 +22,18 @@ const Layout = ({ children }) => {
         <meta property="og:url" content="https://openmic.hectorchan.com/" />
         <meta property="og:title" content="OpenMic — live anonymous Q&A for events" />
         <meta property="og:description" content="Open a room, share the link or QR — questions come in live, the audience upvotes the best. No signup." />
-        <meta property="og:image" content="https://openmic.hectorchan.com/gun-logo.png" />
+        <meta property="og:image" content="https://openmic.hectorchan.com/og.png" />
 
         {/* <!-- Twitter --> */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://openmic.hectorchan.com/" />
         <meta property="twitter:title" content="OpenMic — live anonymous Q&A for events" />
         <meta property="twitter:description" content="Open a room, share the link or QR — questions come in live, the audience upvotes the best. No signup." />
-        <meta property="twitter:image" content="https://openmic.hectorchan.com/gun-logo.png" />
+        <meta property="twitter:image" content="https://openmic.hectorchan.com/og.png" />
 
-        <link rel="icon" href="/gun-logo.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
       <Header />
       <Box p={1} as="main" flex={1}>
