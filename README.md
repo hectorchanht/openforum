@@ -21,20 +21,57 @@ database, in 3 levels:
 
 Threads double as live Q&A rooms:
 
-- **Upvotes** — every post has an ▲ button with a vote count. Click to vote,
+- **Upvotes** — every question has a big ▲ button with a vote count. Click to vote,
   click again to retract. Votes are stored per post at
   `t/<thread>/v/<postKey>` as `{voterId: 1}`; your anonymous voter id lives in
-  `localStorage` (`rg_vid`). Posts sort pinned-first, then by votes, then newest.
+  `localStorage` (`rg_vid`). Cards animate as they re-sort.
 - **Host controls** — the first visitor to a thread with no host becomes the
   host by creating it (`t/<thread>/meta` = `{hostId, createdAt, expiresAt, closed}`).
   The host id is kept in `localStorage` (`rg_host_<thread>`). Hosts can pin one
-  post to the top, delete posts (votes are cleared too), and close/reopen the
-  thread.
+  post to the top, delete posts (votes and status are cleared too), and close/reopen the
+  thread. All host controls are client-enforced (see caveat below).
+- **Mark answered** — the host taps ✓ on a question to mark it answered
+  (stored at `t/<thread>/st/<postKey>` as `{answered, hidden, flags: {voterId: 1}}`).
+  Answered questions get a green badge; filter tabs switch between
+  🟢 Open / ✅ Answered / 📋 All.
+- **Spotlight + present mode** — the host spotlights a question ("🎙 now discussing",
+  stored as `meta.discussingKey`) and it renders as a teleprompter-style banner
+  in the room. Open `/<room>?present=1` on a projector/second screen for a
+  full-screen live view showing only the spotlighted question — it updates
+  automatically as the host moves on.
+- **Search & sort** — a search box filters questions as they arrive; sort by
+  🔥 Top votes or 🕐 Newest (pinned questions always stay first).
+- **Duplicate guard** — while typing, a fuzzy token-overlap match warns
+  "Similar question already asked" so the audience upvotes instead of re-posting.
+- **Audience flagging** — any viewer can flag a question; 3 flags auto-hide it
+  from non-hosts. The host sees flagged posts (dimmed, with flag count) and can
+  unhide or delete them. Client-enforced.
+- **Slow mode** — the host can set a 15/30/60s per-browser cooldown between posts
+  (`meta.slowModeSec`, localStorage-enforced). Client-enforced — noted in the UI.
+- **Host notifications** — opt-in toggle: a browser notification + subtle ping
+  whenever a new question arrives (permission asked on toggle, choice persisted).
+- **Live stats** — question count, total votes, and ~participants
+  (distinct voter ids from votes + author ids) in the room header.
+- **CSV export** — the host downloads every question with votes, status
+  (answered/open/hidden), flag count, and timestamp.
+- **Room title & description** — host-editable (`meta.title`, `meta.desc`),
+  shown at the top of the room.
+- **Anonymous avatars** — each post gets a deterministic emoji+color badge
+  derived from the asker's anonymous id (stored additively at
+  `t/<thread>/a/<postKey>`; old posts just show a default).
 - **Expiring threads** — when creating a thread, the host picks a lifetime:
   1 hour, 24 hours, 7 days, or never. The thread view shows a live countdown.
   Expired or closed threads are read-only (posting and voting disabled, posts
-  still readable). Note: expiry is client-enforced — Gun has no server-side
-  TTL, so treat it as a UX feature, not a security boundary.
+  still readable).
+
+All moderation state (`st/` nodes, `meta.discussingKey`, `meta.slowModeSec`,
+`meta.title`, `meta.desc`, `a/` author ids) is **additive**: rooms created by
+older versions keep working, they just don't have the new fields.
+
+> **Client-enforced caveat:** Gun has no server-side TTL or auth, so expiry,
+> close, slow mode, hiding, and flagging are UX features enforced by each
+> client — a modified client could still read/write. Treat them as
+> moderation conveniences, not a security boundary.
 
 ## Getting started
 
@@ -68,9 +105,10 @@ The original Heroku relay is long gone. To run your own:
 ## Tech
 
 - [Next.js](https://nextjs.org) 14 + React 18
-- [Chakra UI](https://chakra-ui.com) for components
+- [Chakra UI](https://chakra-ui.com) for components (custom dark-first glassmorphism theme)
 - [Gun.js](https://gun.eco) (+ SEA for user auth) for decentralized storage
 - [Jotai](https://jotai.org) for state
+- [Framer Motion](https://www.framer.com/motion/) for card animations
 
 ## License
 
