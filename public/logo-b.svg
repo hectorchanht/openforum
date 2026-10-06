@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenMic logo — variant B">
+  <defs>
+    <radialGradient id="omb-glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#c084fc" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e879f9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="omb-bubble" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e879f9"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0b14"/>
+  <circle cx="32" cy="30" r="24" fill="url(#omb-glow)"/>
+  <!-- bubble tail -->
+  <path d="M20 44 l-7 11 l13 -6.5 z" fill="url(#omb-bubble)"/>
+  <!-- single large gradient bubble -->
+  <rect x="9" y="11" width="46" height="34" rx="15" fill="url(#omb-bubble)"/>
+  <!-- typing dots -->
+  <circle cx="23" cy="28" r="3.6" fill="#f5eeda"/>
+  <circle cx="32" cy="28" r="3.6" fill="#f5eeda"/>
+  <circle cx="41" cy="28" r="3.6" fill="#f5eeda"/>
+</svg>

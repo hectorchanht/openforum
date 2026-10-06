@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenMic logo — variant C">
+  <defs>
+    <radialGradient id="omc-glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#c084fc" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e879f9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="omc-stroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#e879f9"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0b14"/>
+  <circle cx="32" cy="30" r="24" fill="url(#omc-glow)"/>
+  <!-- two overlapping bubble outlines forming an abstract O -->
+  <rect x="8" y="15" width="29" height="26" rx="13" fill="none" stroke="url(#omc-stroke)" stroke-width="4.5"/>
+  <rect x="27" y="23" width="29" height="26" rx="13" fill="none" stroke="url(#omc-stroke)" stroke-width="4.5"/>
+  <!-- small accent dots -->
+  <circle cx="22.5" cy="28" r="2.6" fill="#f5eeda"/>
+  <circle cx="41.5" cy="36" r="2.6" fill="#f5eeda"/>
+</svg>

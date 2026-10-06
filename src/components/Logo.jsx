@@ -14,32 +14,27 @@ export const LogoMark = ({ size = 32, ...rest }) => (
     {...rest}
   >
     <defs>
-      <radialGradient id="om-glow" cx="50%" cy="42%" r="55%">
-        <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.55" />
-        <stop offset="55%" stopColor="#c084fc" stopOpacity="0.28" />
+      <radialGradient id="oma-glow" cx="50%" cy="42%" r="55%">
+        <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.45" />
+        <stop offset="55%" stopColor="#c084fc" stopOpacity="0.22" />
         <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
       </radialGradient>
-      <clipPath id="om-head">
-        <rect x="24" y="10" width="16" height="30" rx="8" />
-      </clipPath>
+      <linearGradient id="oma-bubble" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#a78bfa" />
+        <stop offset="100%" stopColor="#e879f9" />
+      </linearGradient>
     </defs>
     <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0b14" />
-    <circle cx="32" cy="28" r="24" fill="url(#om-glow)" />
-    <rect x="24" y="10" width="16" height="30" rx="8" fill="#f5eeda" />
-    <g clipPath="url(#om-head)" stroke="#0b0b14" strokeWidth="2.1" strokeLinecap="round">
-      <line x1="25.5" y1="16.5" x2="38.5" y2="16.5" />
-      <line x1="25.5" y1="21.5" x2="38.5" y2="21.5" />
-      <line x1="25.5" y1="26.5" x2="38.5" y2="26.5" />
-    </g>
-    <path
-      d="M17.5 29 v7 a14.5 14.5 0 0 0 29 0 v-7"
-      fill="none"
-      stroke="#f5eeda"
-      strokeWidth="3.6"
-      strokeLinecap="round"
-    />
-    <rect x="30.4" y="49" width="3.2" height="6.5" rx="1.6" fill="#f5eeda" />
-    <rect x="24.5" y="55.5" width="15" height="2.8" rx="1.4" fill="#f5eeda" />
+    <circle cx="32" cy="30" r="24" fill="url(#oma-glow)" />
+    {/* back bubble: violet gradient, tail bottom-left */}
+    <path d="M13 33 l-5.5 9.5 l10.5 -5.5 z" fill="#a78bfa" />
+    <rect x="10" y="11" width="33" height="23" rx="9" fill="url(#oma-bubble)" />
+    {/* front bubble: cream, tail bottom-right */}
+    <path d="M51 47 l5.5 9.5 l-10.5 -5.5 z" fill="#f5eeda" />
+    <rect x="20" y="27" width="35" height="23" rx="9" fill="#f5eeda" />
+    {/* text lines inside the front bubble */}
+    <rect x="25.5" y="33" width="24" height="3.4" rx="1.7" fill="#0b0b14" opacity="0.85" />
+    <rect x="25.5" y="39.5" width="16.5" height="3.4" rx="1.7" fill="#0b0b14" opacity="0.55" />
   </svg>
 );
 
