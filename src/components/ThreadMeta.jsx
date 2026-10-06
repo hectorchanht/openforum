@@ -3,6 +3,7 @@ import { useAtom } from "jotai";
 import React from "react";
 import { useThreadMeta } from "../libs/hooks";
 import { threadIdAtom } from "../libs/jotaiAtoms";
+import ShareQR from "./ShareQR";
 
 const TTL_OPTIONS = [
   { label: '1 hour', ms: 60 * 60 * 1000 },
@@ -84,6 +85,7 @@ const ThreadMeta = () => {
             {closed ? 'Reopen thread' : 'Close thread'}
           </Button>
         )}
+        <ShareQR thread={thread} />
       </HStack>
     </Box>
   );
