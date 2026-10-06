@@ -15,6 +15,7 @@ import { useAtom } from "jotai";
 import React from "react";
 import { useRelayOnline } from "../../libs/hooks";
 import { threadIdAtom } from "../../libs/jotaiAtoms";
+import { LogoMark } from "../Logo";
 
 const GithubIcon = ({ colorMode, ...props }) => (
   <Icon {...props}>
@@ -52,9 +53,12 @@ const Footer = () => {
     <Box as="footer" mt="auto" pt={6}>
       <Divider opacity={0.15} mb={3} />
       <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-        <Text fontSize="xs" opacity={0.55}>
-          🎤 OpenMic — decentralized live Q&A · MIT
-        </Text>
+        <Box display="flex" alignItems="center" gap={2}>
+          <LogoMark size={20} />
+          <Text fontSize="xs" opacity={0.55}>
+            OpenMic — decentralized live Q&amp;A · MIT
+          </Text>
+        </Box>
         <Box display="flex" alignItems="center" fontSize="xs" opacity={0.7}>
           <Box as="span" display="inline-block" w="8px" h="8px" borderRadius="full" mr={2}
             bg={relayOnline ? 'green.400' : 'red.500'} />

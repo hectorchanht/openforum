@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenMic logo">
+  <defs>
+    <radialGradient id="om-glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#c084fc" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#e879f9" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="om-head">
+      <rect x="24" y="10" width="16" height="30" rx="8"/>
+    </clipPath>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0b14"/>
+  <circle cx="32" cy="28" r="24" fill="url(#om-glow)"/>
+  <!-- mic head: capsule with grille slots -->
+  <rect x="24" y="10" width="16" height="30" rx="8" fill="#f5eeda"/>
+  <g clip-path="url(#om-head)" stroke="#0b0b14" stroke-width="2.1" stroke-linecap="round">
+    <line x1="25.5" y1="16.5" x2="38.5" y2="16.5"/>
+    <line x1="25.5" y1="21.5" x2="38.5" y2="21.5"/>
+    <line x1="25.5" y1="26.5" x2="38.5" y2="26.5"/>
+  </g>
+  <!-- yoke arms cradling the mic -->
+  <path d="M17.5 29 v7 a14.5 14.5 0 0 0 29 0 v-7"
+        fill="none" stroke="#f5eeda" stroke-width="3.6" stroke-linecap="round"/>
+  <!-- stand stem + base -->
+  <rect x="30.4" y="49" width="3.2" height="6.5" rx="1.6" fill="#f5eeda"/>
+  <rect x="24.5" y="55.5" width="15" height="2.8" rx="1.4" fill="#f5eeda"/>
+</svg>

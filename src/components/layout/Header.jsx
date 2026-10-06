@@ -6,6 +6,7 @@ import React from "react";
 import gun from "../../libs/gun";
 import { useFocus, useRelayOnline } from "../../libs/hooks";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
+import Logo from "../Logo";
 
 const defaultUser = { username: '', password: '' };
 
@@ -139,18 +140,7 @@ const Header = () => {
       >
         <HStack spacing={1} flexShrink={0}>
           <RelayStatus />
-          <Text
-            fontSize="xl"
-            fontWeight="extrabold"
-            bgGradient="linear(to-r, #a78bfa, #e879f9)"
-            bgClip="text"
-            cursor="pointer"
-            onClick={exitThread}
-            title="OpenMic home"
-            userSelect="none"
-          >
-            🎤
-          </Text>
+          <Logo size={30} onClick={exitThread} />
           <ToggleColor />
         </HStack>
 

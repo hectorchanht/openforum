@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import React from 'react';
 import AddPost from '../components/AddPost';
 import Layout from '../components/layout/Layout';
+import Logo from '../components/Logo';
 import PostList from '../components/PostList';
 import PresentView from '../components/PresentView';
 import RoomHeader from '../components/RoomHeader';
@@ -19,7 +20,9 @@ const Hero = () => (
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Text fontSize="6xl" mb={2}>🎤</Text>
+      <Box display="flex" justifyContent="center" mb={4}>
+        <Logo size={76} wordmark />
+      </Box>
       <Heading
         size="2xl"
         mb={3}
