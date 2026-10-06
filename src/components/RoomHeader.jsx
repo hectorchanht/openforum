@@ -203,7 +203,7 @@ const RoomHeader = () => {
   const [thread] = useAtom(threadIdAtom);
   const [sortMode, setSortMode] = useAtom(sortModeAtom);
   const [search, setSearch] = useAtom(searchAtom);
-  const { meta, isHost, expired, closed, readOnly, updateMeta, hostId, claimHost } = useThreadMeta(thread);
+  const { meta, isHost, expired, closed, readOnly, updateMeta, hostId, claimHost, needsCreation } = useThreadMeta(thread);
   const posts = usePosts(thread, null);
   const votes = useVotes(thread);
   const status = usePostStatus(thread);
@@ -271,9 +271,12 @@ const RoomHeader = () => {
 
   if (!thread) return null;
 
-  // Skeleton while the room's metadata streams in from the relay — avoids a
-  // blank pop-in under the header.
-  if (!meta) {
+  // Skeleton only while the room's metadata might still be streaming in from
+  // the relay. For a room that was never created, meta never arrives —
+  // once the load settles (needsCreation) we drop the skeleton instead of
+  // leaving it spinning forever; ThreadMeta's "Start this room as host?"
+  // card covers that state.
+  if (!meta && !needsCreation) {
     return (
       <Box layerStyle="glass" p={4} mb={4} aria-label="Loading room…">
         <VStack align="stretch" spacing={3}>
@@ -284,6 +287,7 @@ const RoomHeader = () => {
       </Box>
     );
   }
+  if (!meta) return null; // uncreated room — nothing to head
 
   const openPresent = () => {
     window.open(`${window.location.origin}/${thread}?present=1`, '_blank', 'noopener');
