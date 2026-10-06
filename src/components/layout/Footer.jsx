@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import React from "react";
-import { useRelayOnline } from "../../libs/hooks";
+import { useRelayOfflineConfirmed } from "../../libs/hooks";
 import { threadIdAtom } from "../../libs/jotaiAtoms";
 import { LogoMark } from "../Logo";
 
@@ -39,7 +39,7 @@ const copyToClipboard = async (text) => {
 const Footer = () => {
   const { colorMode } = useColorMode();
   const [thread] = useAtom(threadIdAtom);
-  const relayOnline = useRelayOnline();
+  const relayOffline = useRelayOfflineConfirmed();
   const [copied, setCopied] = React.useState(false);
 
   const copyThreadLink = async () => {
@@ -61,7 +61,7 @@ const Footer = () => {
         </Box>
         {/* Relay status: silent when healthy (the green "connected" was always
             on — pure noise). Only the failure state renders. */}
-        {relayOnline === false && (
+        {relayOffline && (
           <Box display="flex" alignItems="center" fontSize="xs" fontWeight="semibold" color="red.300">
             <Box as="span" display="inline-block" w="8px" h="8px" borderRadius="full" mr={2} bg="red.500" />
             relay disconnected — local only

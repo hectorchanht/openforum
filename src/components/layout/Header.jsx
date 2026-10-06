@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from 'next/router';
 import React from "react";
 import gun from "../../libs/gun";
-import { useFocus, useRelayOnline } from "../../libs/hooks";
+import { useFocus, useRelayOfflineConfirmed } from "../../libs/hooks";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
 import Logo from "../Logo";
 import ThoughtHeapButton from "../ThoughtHeap";
@@ -13,11 +13,11 @@ import ThoughtHeapButton from "../ThoughtHeap";
 const defaultUser = { username: '', password: '' };
 
 // Relay status: silent when healthy — the green dot was always on, pure
-// noise. Only speaks up on failure: a pulsing red "Offline" pill.
-// (null = still checking on first paint; render nothing to avoid a false alarm.)
+// noise. Only speaks up on CONFIRMED failure (offline for 5s+): a pulsing
+// red "Offline" pill. (Still checking / healthy → render nothing.)
 const RelayStatus = () => {
-  const online = useRelayOnline();
-  if (online !== false) return null;
+  const offline = useRelayOfflineConfirmed();
+  if (!offline) return null;
   return (
     <Box
       display="flex" alignItems="center" gap={1.5} px={2.5} py={1}

@@ -38,6 +38,25 @@ export const useRelayOnline = () => {
   return online;
 }
 
+// Confirmed-offline: true only after the relay has been continuously
+// unreachable for OFFLINE_GRACE_MS. The first tick on page load almost
+// always sees 0 peers (socket still connecting) — without the grace period
+// the error UI would flash spuriously on every fresh load.
+const OFFLINE_GRACE_MS = 5000;
+export const useRelayOfflineConfirmed = () => {
+  const online = useRelayOnline();
+  const [confirmed, setConfirmed] = React.useState(false);
+  React.useEffect(() => {
+    if (online !== false) {
+      setConfirmed(false);
+      return;
+    }
+    const id = setTimeout(() => setConfirmed(true), OFFLINE_GRACE_MS);
+    return () => clearTimeout(id);
+  }, [online]);
+  return confirmed;
+};
+
 // ---- Event Q&A: thread meta / host / expiry ----
 
 const randId = (prefix) =>
