@@ -3,6 +3,7 @@ import { HStack, IconButton, Textarea } from '@chakra-ui/react';
 import { useAtom } from "jotai";
 import React from 'react';
 import gun from '../libs/gun';
+import { useThreadMeta } from '../libs/hooks';
 import { aliasAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 // Keys must be unique per post: unix-seconds collide when two posts land
@@ -13,6 +14,12 @@ const AddPost = () => {
   const [value, setValue] = React.useState('');
   const [thread] = useAtom(threadIdAtom);
   const [alias] = useAtom(aliasAtom);
+  const { readOnly, expired, closed } = useThreadMeta(thread);
+  const disabledMsg = closed
+    ? 'thread closed by host — read-only'
+    : expired
+      ? 'thread expired — read-only'
+      : null;
 
   const path = React.useMemo(
     () => thread
@@ -41,11 +48,12 @@ const AddPost = () => {
       <Textarea
         value={value}
         onChange={handleInputChange}
-        placeholder='leave secrets here for people to find ~'
+        isDisabled={readOnly}
+        placeholder={disabledMsg || 'leave secrets here for people to find ~'}
       />
       <IconButton
         color={!value ? 'white' : 'cyan.400'}
-        isDisabled={!value}
+        isDisabled={!value || readOnly}
         variant={"ghost"}
         onClick={submitValue}
         icon={<CheckIcon />}

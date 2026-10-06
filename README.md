@@ -46,6 +46,25 @@ The original Heroku relay is long gone. To run your own:
    Railway, Fly.io, or any Node host — it just needs `node server.js`).
 2. Set `NEXT_PUBLIC_GUN_PEERS` to `https://your-relay/gun`.
 
+## Event Q&A features
+
+Threads double as live Q&A rooms:
+
+- **Upvotes** — every post has an ▲ button with a vote count. Click to vote,
+  click again to retract. Votes are stored per post at
+  `t/<thread>/v/<postKey>` as `{voterId: 1}`; your anonymous voter id lives in
+  `localStorage` (`rg_vid`). Posts sort pinned-first, then by votes, then newest.
+- **Host controls** — the first visitor to a thread with no host becomes the
+  host by creating it (`t/<thread>/meta` = `{hostId, createdAt, expiresAt, closed}`).
+  The host id is kept in `localStorage` (`rg_host_<thread>`). Hosts can pin one
+  post to the top, delete posts (votes are cleared too), and close/reopen the
+  thread.
+- **Expiring threads** — when creating a thread, the host picks a lifetime:
+  1 hour, 24 hours, 7 days, or never. The thread view shows a live countdown.
+  Expired or closed threads are read-only (posting and voting disabled, posts
+  still readable). Note: expiry is client-enforced — Gun has no server-side
+  TTL, so treat it as a UX feature, not a security boundary.
+
 ## Tech
 
 - [Next.js](https://nextjs.org) 14 + React 18
