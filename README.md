@@ -148,9 +148,16 @@ NEXT_PUBLIC_GUN_PEERS=https://your-relay.example.com/gun
 
 ## Self-hosting a relay
 
-The original Heroku relay is long gone. To run your own:
+The original Heroku relay is long gone. The official relay is now
+[openmic-relay](https://github.com/hectorchanht/openmic-relay) — a
+Cloudflare Worker + Durable Object running a real Gun mesh, with the graph
+journaled to DO storage so history survives restarts (the old Railway
+relay's container filesystem was ephemeral). To run your own:
 
-1. Deploy [rushgun-relay](https://github.com/hectorchanht/rushgun-relay)
+1. Deploy [openmic-relay](https://github.com/hectorchanht/openmic-relay)
+   via the Cloudflare dashboard (connect the repo; no build step —
+   deploy command `npx wrangler deploy`). Or deploy the legacy
+   [rushgun-relay](https://github.com/hectorchanht/rushgun-relay)
    (tiny Node Gun server — Railway, Render, Fly.io, or any Node host).
 2. Set `NEXT_PUBLIC_GUN_PEERS` to `https://your-relay/gun`.
 
