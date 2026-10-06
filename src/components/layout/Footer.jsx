@@ -65,7 +65,7 @@ const Footer = () => {
           </MenuItem>
           <MenuItem
             as="a"
-            href="https://github.com/hectorchanht/rushgun"
+            href="https://github.com/hectorchanht/openmic"
             target="_blank"
             rel="noopener noreferrer"
             icon={<GithubIcon colorMode={colorMode} boxSize={4} />}

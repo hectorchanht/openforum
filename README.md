@@ -1,9 +1,9 @@
-# 🔫 rushgun
+# 🎤 OpenMic
 
-**rush the secret** — drop anonymous text secrets into a decentralized database,
-or tuck them behind a secret token (and optionally a password).
+**Give your audience an open mic** — live anonymous Q&A for events. Open a
+link, get questions in realtime. No signup, no app, no friction.
 
-Live demo: [rushgun.vercel.app](https://rushgun.vercel.app)
+Live demo: [openmic.hectorchan.com](https://openmic.hectorchan.com)
 
 ## How it works
 
@@ -12,39 +12,10 @@ database, in 3 levels:
 
 1. **Public landing page** — anything goes, visible to everyone.
 2. **A secret page** — type a `secret token` and hit the green arrow
-   (or visit `/your-token`) to open a thread only people with the token can find.
+   (or visit `/your-token`) to open a room only people with the token can find.
 3. **A password-protected holy page** — type a `secret token` + a `password`
    (8+ chars) and hit the purple arrow. First login creates the account;
    `u/your-alias` shows your own private page. Press `Esc` to leave a thread.
-
-## Getting started
-
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-## Configuration
-
-By default the app syncs through a few community Gun relays. Point it at your
-own relay(s) instead:
-
-```bash
-# .env.local
-NEXT_PUBLIC_GUN_PEERS=https://your-relay.example.com/gun
-```
-
-(Comma-separated for multiple relays — Gun's mesh uses whichever are reachable.)
-
-## Self-hosting a relay
-
-The original Heroku relay is long gone. To run your own:
-
-1. Fork/clone [gun](https://github.com/amark/gun) and deploy it (Render,
-   Railway, Fly.io, or any Node host — it just needs `node server.js`).
-2. Set `NEXT_PUBLIC_GUN_PEERS` to `https://your-relay/gun`.
 
 ## Event Q&A features
 
@@ -64,6 +35,35 @@ Threads double as live Q&A rooms:
   Expired or closed threads are read-only (posting and voting disabled, posts
   still readable). Note: expiry is client-enforced — Gun has no server-side
   TTL, so treat it as a UX feature, not a security boundary.
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Configuration
+
+By default the app syncs through a self-hosted Gun relay. Point it at your
+own relay(s) instead:
+
+```bash
+# .env.local
+NEXT_PUBLIC_GUN_PEERS=https://your-relay.example.com/gun
+```
+
+(Comma-separated for multiple relays — Gun's mesh uses whichever are reachable.)
+
+## Self-hosting a relay
+
+The original Heroku relay is long gone. To run your own:
+
+1. Deploy [rushgun-relay](https://github.com/hectorchanht/rushgun-relay)
+   (tiny Node Gun server — Railway, Render, Fly.io, or any Node host).
+2. Set `NEXT_PUBLIC_GUN_PEERS` to `https://your-relay/gun`.
 
 ## Tech
 
