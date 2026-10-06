@@ -4,10 +4,28 @@ import { useAtom } from "jotai";
 import { useRouter } from 'next/router';
 import React from "react";
 import gun from "../../libs/gun";
-import { useFocus } from "../../libs/hooks";
+import { useFocus, useRelayOnline } from "../../libs/hooks";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
 
 const defaultUser = { username: '', password: '' };
+
+// Green dot = connected to the Gun relay (posts sync to others live).
+// Red dot = no relay connection (posts stay on this device only).
+const RelayStatus = () => {
+  const online = useRelayOnline();
+  return (
+    <Box
+      title={online
+        ? 'relay connected — posts sync to others live'
+        : 'relay disconnected — posts stay on this device only'}
+      aria-label="relay connection status"
+      display="flex" alignItems="center" px={1}
+    >
+      <Box as="span" display="inline-block" w="10px" h="10px" borderRadius="full"
+        bg={online ? 'green.400' : 'red.500'} />
+    </Box>
+  );
+};
 
 const Header = () => {
   const router = useRouter();
@@ -87,29 +105,6 @@ const Header = () => {
     icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
     onClick={toggleColorMode}
   />;
-
-  // Green dot = connected to the Gun relay (posts sync to others live).
-  // Red dot = no relay connection (posts stay on this device only).
-  const RelayStatus = () => {
-    const [online, setOnline] = React.useState(false);
-    React.useEffect(() => {
-      let n = 0;
-      gun.on('hi', () => { n += 1; setOnline(n > 0); });
-      gun.on('bye', () => { n = Math.max(0, n - 1); setOnline(n > 0); });
-    }, []);
-    return (
-      <Box
-        title={online
-          ? 'relay connected — posts sync to others live'
-          : 'relay disconnected — posts stay on this device only'}
-        aria-label="relay connection status"
-        display="flex" alignItems="center" px={1}
-      >
-        <Box as="span" display="inline-block" w="10px" h="10px" borderRadius="full"
-          bg={online ? 'green.400' : 'red.500'} />
-      </Box>
-    );
-  };
 
   const IsLogin = () => {
     const logout = () => {
