@@ -59,11 +59,14 @@ const Footer = () => {
             OpenForum — decentralized live Q&amp;A · MIT
           </Text>
         </Box>
-        <Box display="flex" alignItems="center" fontSize="xs" opacity={0.7}>
-          <Box as="span" display="inline-block" w="8px" h="8px" borderRadius="full" mr={2}
-            bg={relayOnline ? 'green.400' : 'red.500'} />
-          {relayOnline ? 'relay connected — syncing live' : 'relay disconnected — local only'}
-        </Box>
+        {/* Relay status: silent when healthy (the green "connected" was always
+            on — pure noise). Only the failure state renders. */}
+        {relayOnline === false && (
+          <Box display="flex" alignItems="center" fontSize="xs" fontWeight="semibold" color="red.300">
+            <Box as="span" display="inline-block" w="8px" h="8px" borderRadius="full" mr={2} bg="red.500" />
+            relay disconnected — local only
+          </Box>
+        )}
         <Menu placement="top-end">
           <MenuButton
             as={IconButton}

@@ -15,7 +15,9 @@ export const useFocus = () => {
 // Polls the peer wire state instead of relying on 'hi'/'bye' events,
 // which can fire before a component mounts (race = stuck offline).
 export const useRelayOnline = () => {
-  const [online, setOnline] = React.useState(false);
+  // null = still checking (first paint); true/false once measured.
+  // Starting at null avoids flashing a false "offline" before the first tick.
+  const [online, setOnline] = React.useState(null);
   React.useEffect(() => {
     const countOpenPeers = () => {
       try {

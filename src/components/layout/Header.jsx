@@ -1,6 +1,7 @@
 import { ArrowRightIcon, CloseIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { Box, HStack, IconButton, Input, Text, VStack, useColorMode } from "@chakra-ui/react";
 import { useAtom } from "jotai";
+import { motion } from "framer-motion";
 import { useRouter } from 'next/router';
 import React from "react";
 import gun from "../../libs/gun";
@@ -11,21 +12,26 @@ import ThoughtHeapButton from "../ThoughtHeap";
 
 const defaultUser = { username: '', password: '' };
 
-// Green dot = connected to the Gun relay (posts sync to others live).
-// Red dot = no relay connection (posts stay on this device only).
+// Relay status: silent when healthy — the green dot was always on, pure
+// noise. Only speaks up on failure: a pulsing red "Offline" pill.
+// (null = still checking on first paint; render nothing to avoid a false alarm.)
 const RelayStatus = () => {
   const online = useRelayOnline();
+  if (online !== false) return null;
   return (
     <Box
-      title={online
-        ? 'relay connected — posts sync to others live'
-        : 'relay disconnected — posts stay on this device only'}
-      aria-label="relay connection status"
-      display="flex" alignItems="center" px={1}
+      display="flex" alignItems="center" gap={1.5} px={2.5} py={1}
+      borderRadius="full" bg="red.500" color="white"
+      fontSize="xs" fontWeight="bold" flexShrink={0}
+      title="Couldn't reach the relay — your posts stay on this device only"
+      aria-label="relay connection failed"
     >
-      <Box as="span" display="inline-block" w="10px" h="10px" borderRadius="full"
-        bg={online ? 'green.400' : 'red.500'}
-        boxShadow={online ? '0 0 8px #48bb78' : 'none'} />
+      <motion.span
+        style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#fff" }}
+        animate={{ opacity: [1, 0.25, 1] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      Offline
     </Box>
   );
 };
