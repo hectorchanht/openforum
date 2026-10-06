@@ -605,20 +605,21 @@ const RoomHeader = () => {
               </HStack>
               <HStack justify="space-between" flexWrap="wrap" spacing={2}>
                 <Tooltip label="How many upvotes each person gets in this room — retracting a vote refunds it">
-                  <Text fontSize="sm">🗳️ Votes per person</Text>
+                  <Text fontSize="sm">🗳️ Votes per person <Text as="span" opacity={0.55} fontSize="xs">(0 = unlimited)</Text></Text>
                 </Tooltip>
-                <Select
+                <Input
+                  type="number"
+                  min={0}
+                  max={999}
                   value={voteBudget}
-                  onChange={(e) => updateMeta({ voteBudget: Number(e.target.value) })}
-                  maxW="170px"
+                  onChange={(e) => {
+                    const n = Math.floor(Number(e.target.value));
+                    if (Number.isFinite(n) && n >= 0 && n <= 999) updateMeta({ voteBudget: n });
+                  }}
+                  maxW="110px"
                   size="md"
-                  aria-label="Vote budget per person"
-                >
-                  <option value={0}>🗳️ Unlimited</option>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                    <option key={n} value={n}>🗳️ {n} vote{n !== 1 ? 's' : ''} each</option>
-                  ))}
-                </Select>
+                  aria-label="Votes per person — type any number, 0 means unlimited"
+                />
               </HStack>
               <Button
                 size="sm"

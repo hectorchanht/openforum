@@ -7,7 +7,7 @@ import React from "react";
 import gun from "../../libs/gun";
 import { useFocus, useRelayOfflineConfirmed } from "../../libs/hooks";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
-import Logo from "../Logo";
+import Logo, { LogoMark } from "../Logo";
 import ThoughtHeapButton from "../ThoughtHeap";
 
 const defaultUser = { username: '', password: '' };
@@ -108,6 +108,12 @@ const Header = () => {
     });
   };
 
+  const logout = () => {
+    gun.user().leave();
+    setUser(defaultUser);
+    setAliasAtom('');
+  };
+
   const ToggleColor = () => <IconButton
     variant={"ghost"}
     color={colorMode === "light" ? "blue.400" : 'yellow.300'}
@@ -115,23 +121,6 @@ const Header = () => {
     icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
     onClick={toggleColorMode}
   />;
-
-  const IsLogin = () => {
-    const logout = () => {
-      gun.user().leave();
-      setUser(defaultUser);
-      setAliasAtom('');
-    }
-    // const deleteUser = () => gun.user().delete(username, password);
-
-    return <>
-      <Text fontSize="sm" fontWeight="semibold" color="purple.300" minW={0} flex={1} isTruncated>
-        u/{gun.user()?.is?.alias}
-      </Text>
-      {/* <IconButton variant={"ghost"} onClick={deleteUser} icon={<DeleteIcon />} /> */}
-      <IconButton variant={"ghost"} onClick={logout} color={'red'} icon={<CloseIcon />} aria-label="log out" flexShrink={0} />
-    </>
-  };
 
   const handleEnterShortSecret = (event) => (event.key === 'Enter' && password.length === 0) && setThread();
   const handleEnterPassword = (event) => {
@@ -205,39 +194,61 @@ const Header = () => {
     </VStack>
   );
 
+  const loggedIn = !!gun.user().is;
+
+  // In a room (or on your private page) the header collapses to ONE slim
+  // row: the big wordmark row is redundant once you're inside, so it goes
+  // away and reclaims a full row of vertical space on mobile.
+  const compactBar = (
+    <HStack spacing={1} w="100%" alignItems="center">
+      <Box onClick={exitThread} cursor="pointer" flexShrink={0} lineHeight={0}
+        aria-label="back to home" title="Back to home">
+        <LogoMark size={26} />
+      </Box>
+      <Text
+        fontSize="sm" fontWeight="bold" color="purple.300"
+        minW={0} flex={1} isTruncated
+        title={loggedIn ? "Your private page" : `Room: ${thread}`}
+      >
+        {loggedIn ? `u/${gun.user()?.is?.alias}` : `🏠 ${thread}`}
+      </Text>
+      <ThoughtHeapButton />
+      <RelayStatus />
+      <ToggleColor />
+      <IconButton
+        variant="ghost"
+        onClick={loggedIn ? logout : exitThread}
+        color="red.400"
+        icon={<CloseIcon />}
+        aria-label={loggedIn ? "log out" : "exit room"}
+        flexShrink={0}
+      />
+    </HStack>
+  );
+
   return (
     <Box as={"header"} mb={3} position="sticky" top={2} zIndex={20}>
       <VStack
         layerStyle="glass"
         borderRadius="2xl"
-        p={3}
+        p={loggedIn || thread ? 2 : 3}
         spacing={3}
         align="stretch"
       >
-        {/* Row 1: brand lockup left, status controls right */}
-        <HStack justifyContent="space-between" alignItems="center" w="100%" spacing={2}>
-          <Logo size={30} wordmark onClick={exitThread} />
-          <HStack spacing={0} flexShrink={0}>
-            <ThoughtHeapButton />
-            <RelayStatus />
-            <ToggleColor />
-          </HStack>
-        </HStack>
-
-        {/* Row 2: context-dependent — room entry, in-room, or logged in */}
-        {gun.user().is ? (
-          <HStack spacing={2} w="100%" alignItems="center">
-            <IsLogin />
-          </HStack>
-        ) : thread ? (
-          <HStack spacing={2} w="100%" alignItems="center" justifyContent="space-between">
-            <Text fontSize="sm" fontWeight="bold" color="purple.300" minW={0} flex={1} isTruncated title={`Room: ${thread}`}>
-              🏠 {thread}
-            </Text>
-            <IconButton variant="ghost" onClick={exitThread} color="red.400" icon={<CloseIcon />} aria-label="exit room" flexShrink={0} />
-          </HStack>
-        ) : (
-          roomEntry
+        {loggedIn || thread ? compactBar : (
+          <>
+            {/* Row 1: brand lockup left, status controls right */}
+            <HStack justifyContent="space-between" alignItems="center" w="100%" spacing={2}>
+              <Logo size={30} wordmark onClick={exitThread} />
+              <HStack spacing={0} flexShrink={0}>
+                <ThoughtHeapButton />
+                <RelayStatus />
+                <ToggleColor />
+              </HStack>
+            </HStack>
+            {/* Row 2: room entry */}
+            {roomEntry}
+          </>
         )}
       </VStack>
     </Box>
