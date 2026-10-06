@@ -1,5 +1,5 @@
 import { ArrowRightIcon, CloseIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { Box, HStack, IconButton, Input, useColorMode } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Input, Text, useColorMode } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { useRouter } from 'next/router';
 import React from "react";
@@ -22,7 +22,8 @@ const RelayStatus = () => {
       display="flex" alignItems="center" px={1}
     >
       <Box as="span" display="inline-block" w="10px" h="10px" borderRadius="full"
-        bg={online ? 'green.400' : 'red.500'} />
+        bg={online ? 'green.400' : 'red.500'}
+        boxShadow={online ? '0 0 8px #48bb78' : 'none'} />
     </Box>
   );
 };
@@ -62,7 +63,8 @@ const Header = () => {
   }, [exitThread]);
 
   React.useEffect(() => {
-    const secret = router.asPath.slice(1);
+    // strip any query string (e.g. ?present=1) before treating the path as a room id
+    const secret = router.asPath.split('?')[0].slice(1);
 
     if (secret) {
       setThreadIdAtom(secret);
@@ -100,7 +102,7 @@ const Header = () => {
 
   const ToggleColor = () => <IconButton
     variant={"ghost"}
-    color={colorMode === "light" ? "blue.400" : 'red.400'}
+    color={colorMode === "light" ? "blue.400" : 'yellow.300'}
     aria-label="toggle ColorMode"
     icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
     onClick={toggleColorMode}
@@ -115,48 +117,76 @@ const Header = () => {
     // const deleteUser = () => gun.user().delete(username, password);
 
     return <>
-      <Box>
+      <Text fontSize="sm" fontWeight="semibold" color="purple.300">
         u/{gun.user()?.is?.alias}
-      </Box>
+      </Text>
       {/* <IconButton variant={"ghost"} onClick={deleteUser} icon={<DeleteIcon />} /> */}
-      <IconButton variant={"ghost"} onClick={logout} color={'red'} icon={<CloseIcon />} />
+      <IconButton variant={"ghost"} onClick={logout} color={'red'} icon={<CloseIcon />} aria-label="log out" />
     </>
   };
 
   const handleEnterShortSecret = (event) => (event.key === 'Enter' && password.length === 0) && setThread();
 
   return (
-    <Box as={"header"} mb={2}>
-      <HStack p={2} borderRadius={8} boxShadow="lg" spacing={'4px'} justifyContent={"space-between"}>
-        {/* <Image src={"/gun-logo.png"} alt={"logo"} height={"38px"} width={"38px"} /> */}
-
-        <RelayStatus />
-        <ToggleColor />
+    <Box as={"header"} mb={3} position="sticky" top={2} zIndex={20}>
+      <HStack
+        p={2}
+        pl={3}
+        borderRadius="2xl"
+        spacing={1}
+        justifyContent="space-between"
+        layerStyle="glass"
+      >
+        <HStack spacing={1} flexShrink={0}>
+          <RelayStatus />
+          <Text
+            fontSize="xl"
+            fontWeight="extrabold"
+            bgGradient="linear(to-r, #a78bfa, #e879f9)"
+            bgClip="text"
+            cursor="pointer"
+            onClick={exitThread}
+            title="OpenMic home"
+            userSelect="none"
+          >
+            🎤
+          </Text>
+          <ToggleColor />
+        </HStack>
 
         {
           gun.user().is
             ? <IsLogin />
             : (thread
               ? (
-                <>
-                  <Box>t/{thread}</Box>
-                  <IconButton variant={"ghost"} onClick={exitThread} color={'red.600'} icon={<CloseIcon />} />
-                </>
+                <HStack spacing={1}>
+                  <Text fontSize="sm" fontWeight="bold" color="purple.300" maxW="40vw" isTruncated>
+                    t/{thread}
+                  </Text>
+                  <IconButton variant="ghost" onClick={exitThread} color="red.400" icon={<CloseIcon />} aria-label="exit room" />
+                </HStack>
               ) : (
-                <>
+                <HStack spacing={1} flexWrap="wrap" justify="flex-end">
                   <Input
                     ref={usernameRef}
                     value={username} width="auto" placeholder="room name"
-                    onChange={setUsername} onKeyDown={handleEnterShortSecret} />
+                    onChange={setUsername} onKeyDown={handleEnterShortSecret}
+                    size="sm" maxW="150px" />
 
                   {username && username.length >= 4 && (
-                    <Input value={password} width="auto" onChange={setPassword} placeholder="password" />)}
+                    <Input value={password} width="auto" onChange={setPassword} placeholder="password" type="password" size="sm" maxW="130px" />)}
 
                   <IconButton
-                    isDisabled={!username.length || alertMsg.length} variant={"ghost"}
+                    aria-label={password.length >= 8 ? 'open holy page' : 'join room'}
+                    title={password.length >= 8
+                      ? 'Purple arrow: password-protected holy page (u/your-alias)'
+                      : 'Green arrow: join room (password empty)'}
+                    isDisabled={!username.length || alertMsg.length}
+                    variant="solid"
+                    colorScheme={password.length >= 8 ? 'purple' : 'green'}
                     onClick={password.length >= 8 ? loginGun : setThread}
-                    color={password.length >= 8 ? '#805AD5' : 'green.400'} icon={<ArrowRightIcon />} />
-                </>
+                    icon={<ArrowRightIcon />} />
+                </HStack>
               ))}
       </HStack>
     </Box>

@@ -1,9 +1,8 @@
-import { Badge, Box, Button, HStack, Select, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, Select, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import React from "react";
 import { useThreadMeta } from "../libs/hooks";
 import { threadIdAtom } from "../libs/jotaiAtoms";
-import ShareQR from "./ShareQR";
 
 const TTL_OPTIONS = [
   { label: '1 hour', ms: 60 * 60 * 1000 },
@@ -12,31 +11,13 @@ const TTL_OPTIONS = [
   { label: 'Never expires', ms: 0 },
 ];
 
-const fmtLeft = (ms) => {
-  if (ms <= 0) return 'expired';
-  const s = Math.floor(ms / 1000);
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h left`;
-  if (h > 0) return `${h}h ${m}m left`;
-  if (m > 0) return `${m}m ${s % 60}s left`;
-  return `${s}s left`;
-};
-
+// Thread bootstrap: creation card for unclaimed rooms + read-only banners.
+// The rest of the room UI (title, stats, host controls) lives in RoomHeader.
 const ThreadMeta = () => {
   const [thread] = useAtom(threadIdAtom);
-  const { meta, isHost, expired, closed, needsCreation, createThread, updateMeta } = useThreadMeta(thread);
+  const { expired, closed, needsCreation, createThread } = useThreadMeta(thread);
   const [ttl, setTtl] = React.useState(TTL_OPTIONS[1].ms);
   const [dismissed, setDismissed] = React.useState(false);
-  const [, force] = React.useReducer((x) => x + 1, 0);
-
-  // re-render the countdown text
-  React.useEffect(() => {
-    if (!meta || meta.expiresAt == null || expired) return;
-    const id = setInterval(force, 30000);
-    return () => clearInterval(id);
-  }, [meta, expired]);
 
   React.useEffect(() => { setDismissed(false); }, [thread]);
 
@@ -44,22 +25,24 @@ const ThreadMeta = () => {
 
   if (needsCreation && !dismissed) {
     return (
-      <Box borderWidth="1px" borderRadius="md" p={3} mb={3}>
-        <Text fontWeight="bold" mb={1}>Start this thread as host?</Text>
-        <Text fontSize="sm" opacity={0.8} mb={2}>
-          t/{thread} has no host yet. Whoever starts it becomes the host
-          (pin posts, delete posts, close the thread).
+      <Box layerStyle="glass" p={5} mb={4}>
+        <Text fontWeight="extrabold" fontSize="lg" mb={1}>
+          🎤 Start this room as host?
         </Text>
-        <HStack>
-          <Select value={ttl} onChange={(e) => setTtl(Number(e.target.value))} maxW="190px" size="sm">
+        <Text fontSize="sm" opacity={0.8} mb={3}>
+          <Text as="span" fontWeight="bold">t/{thread}</Text> has no host yet. Whoever starts it
+          becomes the host — pin &amp; spotlight questions, mark them answered, export results.
+        </Text>
+        <HStack flexWrap="wrap">
+          <Select value={ttl} onChange={(e) => setTtl(Number(e.target.value))} maxW="190px">
             {TTL_OPTIONS.map((o) => (
               <option key={o.label} value={o.ms}>{o.label}</option>
             ))}
           </Select>
-          <Button colorScheme="cyan" size="sm" onClick={() => createThread(ttl)}>
-            Create thread
+          <Button colorScheme="purple" onClick={() => createThread(ttl)}>
+            Create room
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDismissed(true)}>
+          <Button variant="ghost" onClick={() => setDismissed(true)}>
             Later
           </Button>
         </HStack>
@@ -67,28 +50,27 @@ const ThreadMeta = () => {
     );
   }
 
-  if (!meta) return null; // still resolving
+  if (closed || expired) {
+    return (
+      <Box
+        bg="red.500"
+        color="white"
+        borderRadius="2xl"
+        px={4}
+        py={3}
+        mb={4}
+        fontSize="sm"
+        fontWeight="semibold"
+        boxShadow="lg"
+      >
+        {closed
+          ? '🔒 Room closed by host — read-only. Questions and votes are still visible.'
+          : '⏰ Room expired — read-only. Questions and votes are still visible.'}
+      </Box>
+    );
+  }
 
-  return (
-    <Box mb={3}>
-      {(closed || expired) && (
-        <Box bg="red.500" color="white" borderRadius="md" px={3} py={2} mb={2} fontSize="sm">
-          {closed ? 'Thread closed by host — read-only.' : 'Thread expired — read-only.'}
-        </Box>
-      )}
-      <HStack spacing={2} fontSize="sm" opacity={0.85} flexWrap="wrap">
-        {isHost && <Badge colorScheme="purple">host</Badge>}
-        {meta.expiresAt != null && !expired && <Text>Expires in {fmtLeft(meta.expiresAt - Date.now())}</Text>}
-        {meta.expiresAt == null && <Text>Never expires</Text>}
-        {isHost && (
-          <Button size="xs" variant="outline" onClick={() => updateMeta({ closed: !closed })}>
-            {closed ? 'Reopen thread' : 'Close thread'}
-          </Button>
-        )}
-        <ShareQR thread={thread} />
-      </HStack>
-    </Box>
-  );
+  return null;
 };
 
 export default ThreadMeta;

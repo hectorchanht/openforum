@@ -1,13 +1,14 @@
 import { CopyIcon, ExternalLinkIcon, HamburgerIcon } from "@chakra-ui/icons";
 import {
   Box,
+  Divider,
   Icon,
   IconButton,
   Menu,
   MenuButton,
-  MenuDivider,
   MenuItem,
   MenuList,
+  Text,
   useColorMode,
 } from "@chakra-ui/react";
 import { useAtom } from "jotai";
@@ -48,38 +49,43 @@ const Footer = () => {
   };
 
   return (
-    <Box textAlign={'center'} as="footer" mt="auto">
-      <Menu placement="top">
-        <MenuButton
-          as={IconButton}
-          variant="ghost"
-          aria-label="more"
-          icon={<HamburgerIcon />}
-          size="sm"
-          opacity={0.7}
-          _hover={{ opacity: 1 }}
-        />
-        <MenuList textAlign="left">
-          <MenuItem icon={<CopyIcon />} onClick={copyThreadLink} isDisabled={!thread}>
-            {copied ? 'Link copied!' : thread ? 'Copy thread link' : 'Copy thread link (no thread open)'}
-          </MenuItem>
-          <MenuItem
-            as="a"
-            href="https://github.com/hectorchanht/openmic"
-            target="_blank"
-            rel="noopener noreferrer"
-            icon={<GithubIcon colorMode={colorMode} boxSize={4} />}
-          >
-            GitHub repo <ExternalLinkIcon mx="2px" />
-          </MenuItem>
-          <MenuDivider />
-          <Box px={3} py={2} display="flex" alignItems="center" fontSize="sm" opacity={0.8}>
-            <Box as="span" display="inline-block" w="8px" h="8px" borderRadius="full" mr={2}
-              bg={relayOnline ? 'green.400' : 'red.500'} />
-            {relayOnline ? 'relay connected — posts sync live' : 'relay disconnected — posts stay local'}
-          </Box>
-        </MenuList>
-      </Menu>
+    <Box as="footer" mt="auto" pt={6}>
+      <Divider opacity={0.15} mb={3} />
+      <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+        <Text fontSize="xs" opacity={0.55}>
+          🎤 OpenMic — decentralized live Q&A · MIT
+        </Text>
+        <Box display="flex" alignItems="center" fontSize="xs" opacity={0.7}>
+          <Box as="span" display="inline-block" w="8px" h="8px" borderRadius="full" mr={2}
+            bg={relayOnline ? 'green.400' : 'red.500'} />
+          {relayOnline ? 'relay connected — syncing live' : 'relay disconnected — local only'}
+        </Box>
+        <Menu placement="top-end">
+          <MenuButton
+            as={IconButton}
+            variant="ghost"
+            aria-label="more"
+            icon={<HamburgerIcon />}
+            size="sm"
+            opacity={0.7}
+            _hover={{ opacity: 1 }}
+          />
+          <MenuList textAlign="left">
+            <MenuItem icon={<CopyIcon />} onClick={copyThreadLink} isDisabled={!thread}>
+              {copied ? 'Link copied!' : thread ? 'Copy room link' : 'Copy room link (no room open)'}
+            </MenuItem>
+            <MenuItem
+              as="a"
+              href="https://github.com/hectorchanht/openmic"
+              target="_blank"
+              rel="noopener noreferrer"
+              icon={<GithubIcon colorMode={colorMode} boxSize={4} />}
+            >
+              GitHub repo <ExternalLinkIcon mx="2px" />
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </Box>
     </Box>
   );
 };
