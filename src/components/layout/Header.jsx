@@ -146,7 +146,7 @@ const Header = () => {
                 <>
                   <Input
                     ref={usernameRef}
-                    value={username} width="auto" placeholder="secret token"
+                    value={username} width="auto" placeholder="room name"
                     onChange={setUsername} onKeyDown={handleEnterShortSecret} />
 
                   {username && username.length >= 4 && (

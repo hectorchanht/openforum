@@ -49,7 +49,7 @@ const AddPost = () => {
         value={value}
         onChange={handleInputChange}
         isDisabled={readOnly}
-        placeholder={disabledMsg || 'leave secrets here for people to find ~'}
+        placeholder={disabledMsg || (thread ? 'Ask a question…' : 'leave secrets here for people to find ~')}
       />
       <IconButton
         color={!value ? 'white' : 'cyan.400'}
