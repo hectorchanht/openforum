@@ -99,7 +99,7 @@ const QuestionCard = ({
                 colorScheme={voted ? 'cyan' : 'gray'}
                 aria-label={voted ? 'remove upvote' : 'upvote'}
                 aria-pressed={voted}
-                icon={<TriangleUpIcon boxSize={5} />}
+                icon={<TriangleUpIcon boxSize={6} />}
                 onClick={() => onVote(post.key)}
                 isDisabled={voteDisabled}
                 borderRadius="xl"
@@ -171,11 +171,11 @@ const QuestionCard = ({
             {/* Follow — sits at the row's end so it never shifts other content */}
             <Tooltip label={followed ? 'Following — tap to unfollow' : 'Follow this question — get pinged when it\u2019s answered'}>
               <IconButton
-                size="xs"
+                size="sm"
                 variant="ghost"
                 aria-label={followed ? 'unfollow this question' : 'follow this question'}
                 aria-pressed={followed}
-                icon={<BellIcon />}
+                icon={<BellIcon boxSize={4} />}
                 color={followed ? 'yellow.400' : 'gray.500'}
                 onClick={onToggleFollow}
                 minW="32px"

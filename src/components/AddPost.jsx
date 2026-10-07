@@ -135,12 +135,12 @@ const AddPost = () => {
         <IconButton
           aria-label="post"
           colorScheme="purple"
-          size="lg"
-          minW="56px"
-          minH="56px"
+          size="md"
+          minW="48px"
+          minH="48px"
           isDisabled={!value.trim() || readOnly}
           onClick={submitValue}
-          icon={<CheckIcon />}
+          icon={<CheckIcon boxSize={5} />}
         />
       </HStack>
       {similar && (
