@@ -1,8 +1,10 @@
 import { HStack, Text } from "@chakra-ui/react";
 import React from "react";
 
-// Inline SVG logo mark — same artwork as public/logo.svg, rendered inline so
-// it stays sharp at any size and needs no extra request.
+// Inline SVG logo mark — the "Q": a gradient ring (the O in OpenForum) with
+// a speech-bubble tail, so it reads as Q, ?, and a chat bubble at once.
+// Same artwork as public/logo.svg, rendered inline so it stays sharp at any
+// size and needs no extra request.
 export const LogoMark = ({ size = 32, ...rest }) => (
   <svg
     width={size}
@@ -14,27 +16,33 @@ export const LogoMark = ({ size = 32, ...rest }) => (
     {...rest}
   >
     <defs>
-      <radialGradient id="oma-glow" cx="50%" cy="42%" r="55%">
+      <radialGradient id="ofq-glow" cx="50%" cy="42%" r="55%">
         <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.45" />
         <stop offset="55%" stopColor="#c084fc" stopOpacity="0.22" />
         <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
       </radialGradient>
-      <linearGradient id="oma-bubble" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="ofq-grad" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stopColor="#a78bfa" />
         <stop offset="100%" stopColor="#e879f9" />
       </linearGradient>
     </defs>
-    <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0b14" />
-    <circle cx="32" cy="30" r="24" fill="url(#oma-glow)" />
-    {/* back bubble: violet gradient, tail bottom-left */}
-    <path d="M13 33 l-5.5 9.5 l10.5 -5.5 z" fill="#a78bfa" />
-    <rect x="10" y="11" width="33" height="23" rx="9" fill="url(#oma-bubble)" />
-    {/* front bubble: cream, tail bottom-right */}
-    <path d="M51 47 l5.5 9.5 l-10.5 -5.5 z" fill="#f5eeda" />
-    <rect x="20" y="27" width="35" height="23" rx="9" fill="#f5eeda" />
-    {/* text lines inside the front bubble */}
-    <rect x="25.5" y="33" width="24" height="3.4" rx="1.7" fill="#0b0b14" opacity="0.85" />
-    <rect x="25.5" y="39.5" width="16.5" height="3.4" rx="1.7" fill="#0b0b14" opacity="0.55" />
+    <circle cx="30" cy="28" r="24" fill="url(#ofq-glow)" />
+    {/* Q ring */}
+    <circle
+      cx="28"
+      cy="27"
+      r="16"
+      fill="none"
+      stroke="url(#ofq-grad)"
+      strokeWidth="10"
+    />
+    {/* speech-bubble tail — turns the O into a Q */}
+    <path
+      d="M39 38 L51 51"
+      stroke="url(#ofq-grad)"
+      strokeWidth="10"
+      strokeLinecap="round"
+    />
   </svg>
 );
 

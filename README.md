@@ -1,4 +1,4 @@
-# 💬 OpenForum
+# ❓ OpenForum
 
 **Give your audience an open forum** — live anonymous Q&A for events. Open a
 link, get questions in realtime. No signup, no app, no friction.
