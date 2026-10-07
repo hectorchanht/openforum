@@ -21,7 +21,7 @@ const Hero = () => (
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* fluid wordmark: clamp() scales with the viewport so "OpenForum"
+      {/* fluid wordmark: clamp() scales with the viewport so "OpenQ"
           never clips on narrow phones (was cut off at 360px with nowrap). */}
       <Box display="flex" justifyContent="center" mb={4} maxW="100%">
         <Logo size={64} wordmark wordmarkFontSize="clamp(1.75rem, 9vw, 2.75rem)" />
@@ -32,11 +32,12 @@ const Hero = () => (
         bgGradient="linear(to-r, #a78bfa, #e879f9)"
         bgClip="text"
       >
-        Give your audience an open forum
+        A forum in a queue
       </Heading>
-      <Text fontSize="lg" opacity={0.8} mb={6} maxW="520px" mx="auto">
-        Live anonymous Q&amp;A for events. Open a room, flash the QR code —
-        questions stream in, the crowd upvotes the best. No signup, no app.
+      <Text fontSize="lg" opacity={0.8} mb={6} maxW="560px" mx="auto">
+        OpenQ turns your event into a live question queue. The audience joins
+        from their phones, asks anything, and upvotes the best to the front —
+        you just work the queue from the stage. No signup, no app.
       </Text>
       <Button
         size="lg"
@@ -55,15 +56,15 @@ const Hero = () => (
         h="auto"
         py={4}
       >
-        🚀 Start a room — it takes 10 seconds
+        🚀 Open the Q — it takes 10 seconds
       </Button>
     </motion.div>
 
     <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} maxW="760px" mx="auto" textAlign="left">
       {[
-        { emoji: '🔗', title: '1. Share a link', body: 'Type a room name above — share the link or QR. The audience joins instantly from their phones.' },
-        { emoji: '⚡', title: '2. Questions fly in', body: 'Anonymous questions arrive in realtime. Duplicates are flagged, spam gets slow mode.' },
-        { emoji: '🎙', title: '3. Run the show', body: 'Spotlight questions on the big screen, mark them answered, export the CSV after.' },
+        { emoji: '🔗', title: '1. Open the Q', body: 'Name a room and flash the QR code. The audience joins instantly from their phones — no signup, no app to install.' },
+        { emoji: '📋', title: '2. Questions queue up', body: 'They arrive live and the crowd upvotes the best to the front of the line. Duplicates get flagged, spam gets slow mode.' },
+        { emoji: '🎙', title: '3. Work the queue', body: 'Spotlight questions on the big screen, mark them answered as you go, export the results when you\u2019re done.' },
       ].map((s, i) => (
         <motion.div
           key={s.title}

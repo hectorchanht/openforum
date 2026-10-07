@@ -1,6 +1,6 @@
 import { extendTheme } from '@chakra-ui/react';
 
-// Dark-first, glassy, modern OpenForum theme.
+// Dark-first, glassy, modern OpenQ theme.
 // Violet → fuchsia brand gradient, rounded-2xl surfaces, generous touch targets.
 const theme = extendTheme({
   config: {

@@ -1,8 +1,8 @@
 import { HStack, Text } from "@chakra-ui/react";
 import React from "react";
 
-// Inline SVG logo mark — the "Q": a gradient ring (the O in OpenForum) with
-// a speech-bubble tail, so it reads as Q, ?, and a chat bubble at once.
+// Inline SVG logo mark — the "Q": a gradient ring with a speech-bubble
+// tail, so it reads as Q, ?, and a chat bubble at once.
 // Same artwork as public/logo.svg, rendered inline so it stays sharp at any
 // size and needs no extra request.
 export const LogoMark = ({ size = 32, ...rest }) => (
@@ -11,7 +11,7 @@ export const LogoMark = ({ size = 32, ...rest }) => (
     height={size}
     viewBox="0 0 64 64"
     role="img"
-    aria-label="OpenForum logo"
+    aria-label="OpenQ logo"
     style={{ display: "block", flexShrink: 0 }}
     {...rest}
   >
@@ -46,7 +46,8 @@ export const LogoMark = ({ size = 32, ...rest }) => (
   </svg>
 );
 
-// Horizontal lockup: mark + "OpenForum" wordmark ("Forum" in the brand gradient).
+// Horizontal lockup: mark + "OpenQ" wordmark ("Q" in the brand gradient,
+// echoing the Q mark — the logo holds both the O and the Q).
 // wordmarkFontSize accepts a CSS clamp() so the hero wordmark can scale with
 // the viewport and never clip on narrow phones.
 const Logo = ({ size = 32, wordmark = false, wordmarkFontSize, onClick, ...rest }) => (
@@ -54,7 +55,7 @@ const Logo = ({ size = 32, wordmark = false, wordmarkFontSize, onClick, ...rest 
     spacing={2.5}
     onClick={onClick}
     cursor={onClick ? "pointer" : undefined}
-    title={onClick ? "OpenForum home" : undefined}
+    title={onClick ? "OpenQ home" : undefined}
     userSelect="none"
     maxW="100%"
     {...rest}
@@ -74,7 +75,7 @@ const Logo = ({ size = 32, wordmark = false, wordmarkFontSize, onClick, ...rest 
           bgGradient="linear(to-r, #a78bfa, #e879f9)"
           bgClip="text"
         >
-          Forum
+          Q
         </Text>
       </Text>
     )}

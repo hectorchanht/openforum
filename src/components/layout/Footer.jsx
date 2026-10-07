@@ -22,7 +22,7 @@ const GithubIcon = ({ colorMode, ...props }) => (
   </Icon>
 );
 
-const REPO_URL = "https://github.com/hectorchanht/openforum";
+const REPO_URL = "https://github.com/hectorchanht/openq";
 
 const copyToClipboard = async (text) => {
   try {
@@ -80,11 +80,11 @@ const Footer = () => {
         <VStack align="start" spacing={2}>
           <Box display="flex" alignItems="center" gap={2}>
             <LogoMark size={24} />
-            <Text fontWeight="extrabold" fontSize="md">OpenForum</Text>
+            <Text fontWeight="extrabold" fontSize="md">OpenQ</Text>
           </Box>
           <Text fontSize="sm" opacity={0.65} lineHeight="1.6" maxW="320px">
-            Live anonymous Q&amp;A for events — open a room, share the link,
-            the audience asks and upvotes. No signup, no app.
+            The forum in a queue — live Q&amp;A for events. Open a room, share
+            the link, the audience queues their questions. No signup, no app.
           </Text>
         </VStack>
 
@@ -134,7 +134,7 @@ const Footer = () => {
       <Divider opacity={0.1} mb={3} />
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
         <Text fontSize="xs" opacity={0.5}>
-          © {new Date().getFullYear()} OpenForum · Questions sync through the Gun relay — no accounts, no tracking.
+          © {new Date().getFullYear()} OpenQ · Questions sync through the Gun relay — no accounts, no tracking.
         </Text>
         {/* Relay status: silent when healthy (the green "connected" was always
             on — pure noise). Only the failure state renders. */}

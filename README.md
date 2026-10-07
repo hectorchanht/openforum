@@ -1,9 +1,9 @@
-# ❓ OpenForum
+# ❓ OpenQ
 
-**Give your audience an open forum** — live anonymous Q&A for events. Open a
-link, get questions in realtime. No signup, no app, no friction.
+**A forum in a queue** — live Q&A for events. Open a room, share the
+link, the audience queues their questions and upvotes the best to the front. No signup, no app, no friction.
 
-Live demo: [openforum.hectorchan.com](https://openforum.hectorchan.com)
+Live demo: [openq.hectorchan.com](https://openq.hectorchan.com)
 
 ## How it works
 
@@ -130,7 +130,7 @@ Threads double as live Q&A rooms:
   hit **→ Question** on any item: it loads into the composer as a *draft*
   (never auto-posts) — navigating to the tagged room first if you're elsewhere.
   Items can be edited inline, deleted, or cleared in bulk. **Heap items live in
-  localStorage (`openforum-heap`) only and are never written to the Gun graph —
+  localStorage (`openq-heap`) only and are never written to the Gun graph —
   half-formed thoughts stay on your device.**
 
 All moderation state (`st/` nodes, `r/` replies, `p/` pending, `meta.discussingKey`,
@@ -138,7 +138,7 @@ All moderation state (`st/` nodes, `r/` replies, `p/` pending, `meta.discussingK
 `meta.mutedAuthors`, `a/` author ids, `st/<key>.mergedInto`) is **additive**:
 rooms created by older versions keep working, they just don't have the new fields.
 
-> **Pseudonymity model (read this):** OpenForum is *pseudonymous*, not
+> **Pseudonymity model (read this):** OpenQ is *pseudonymous*, not
 > unlinkably anonymous. Your browser gets a random id (`rg_vid` in
 > localStorage); every question you ask is stamped with it (at
 > `t/<thread>/a/<postKey>`) and deterministically mapped to a public
