@@ -70,7 +70,10 @@ const Footer = () => {
   };
 
   return (
-    <Box as="footer" mt="auto" pt={8} pb={3}>
+    // In a room the composer is fixed to the bottom of the viewport, so the
+    // footer needs bottom clearance — otherwise it slides under the composer
+    // when scrolled to the very bottom.
+    <Box as="footer" mt="auto" pt={8} pb={thread ? '170px' : 3}>
       <Divider opacity={0.15} mb={6} />
       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={6}>
         {/* Brand */}
