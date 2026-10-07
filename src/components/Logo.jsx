@@ -1,49 +1,20 @@
-import { HStack, Text } from "@chakra-ui/react";
+import { HStack, Image, Text } from "@chakra-ui/react";
 import React from "react";
 
-// Inline SVG logo mark — the "Q": a gradient ring with a speech-bubble
-// tail, so it reads as Q, ?, and a chat bubble at once.
-// Same artwork as public/logo.svg, rendered inline so it stays sharp at any
-// size and needs no extra request.
+// Logo mark — the favicon Q artwork (public/logo.png), used everywhere:
+// header, footer, hero. One source of truth, so the mark can never drift
+// from the icon again.
 export const LogoMark = ({ size = 32, ...rest }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 64 64"
-    role="img"
-    aria-label="OpenQ logo"
-    style={{ display: "block", flexShrink: 0 }}
+  <Image
+    src="/logo.png"
+    alt="OpenQ logo"
+    boxSize={size}
+    borderRadius="22%"
+    display="block"
+    flexShrink={0}
+    draggable={false}
     {...rest}
-  >
-    <defs>
-      <radialGradient id="ofq-glow" cx="50%" cy="42%" r="55%">
-        <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.45" />
-        <stop offset="55%" stopColor="#c084fc" stopOpacity="0.22" />
-        <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
-      </radialGradient>
-      <linearGradient id="ofq-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#a78bfa" />
-        <stop offset="100%" stopColor="#e879f9" />
-      </linearGradient>
-    </defs>
-    <circle cx="30" cy="28" r="24" fill="url(#ofq-glow)" />
-    {/* Q ring */}
-    <circle
-      cx="28"
-      cy="27"
-      r="16"
-      fill="none"
-      stroke="url(#ofq-grad)"
-      strokeWidth="10"
-    />
-    {/* speech-bubble tail — turns the O into a Q */}
-    <path
-      d="M39 38 L51 51"
-      stroke="url(#ofq-grad)"
-      strokeWidth="10"
-      strokeLinecap="round"
-    />
-  </svg>
+  />
 );
 
 // Horizontal lockup: mark + "OpenQ" wordmark ("Q" in the brand gradient,
