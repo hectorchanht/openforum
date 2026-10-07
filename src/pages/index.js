@@ -113,6 +113,12 @@ export default function Home() {
     }
   }, [thread, setSearch, setSortMode, setStatusFilter, setMyOnly, setAuthorFilter]);
 
+  // entering (or leaving) a room is a view change — start at the top
+  // instead of wherever the landing page left the scroll position
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0 });
+  }, [thread]);
+
   // ?present=1 — projector view showing only the spotlighted question, live.
   const present = React.useMemo(
     () => typeof window !== 'undefined' && /[?&]present=1\b/.test(router.asPath),
