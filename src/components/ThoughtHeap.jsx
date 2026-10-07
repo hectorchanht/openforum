@@ -43,6 +43,7 @@ const HeapItem = ({ item, onPromote, onUpdate, onDelete }) => {
           <Textarea
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(); } }}
             rows={3}
             fontSize="md"
             minW={0}

@@ -411,12 +411,14 @@ const RoomHeader = () => {
               <Input
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveTitleDesc(); }}
                 placeholder="Room title — e.g. Town Hall Q&A"
                 maxLength={80}
               />
               <Input
                 value={descDraft}
                 onChange={(e) => setDescDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveTitleDesc(); }}
                 placeholder="Short description for the audience"
                 maxLength={160}
               />
@@ -508,6 +510,7 @@ const RoomHeader = () => {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
             placeholder="🔍 Search questions…"
             size="md"
             minH="44px"
@@ -650,6 +653,7 @@ const RoomHeader = () => {
                   maxW="110px"
                   size="md"
                   aria-label="Votes per person — type any number, 0 means unlimited"
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
                 />
               </HStack>
               <Button

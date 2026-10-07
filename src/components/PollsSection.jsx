@@ -20,11 +20,13 @@ export const PollCreateModal = ({ isOpen, onClose, thread }) => {
   const [q, setQ] = React.useState('');
   const [options, setOptions] = React.useState(['', '']);
   const toast = useToast();
+  const optRefs = React.useRef([]);
 
   React.useEffect(() => {
     if (isOpen) {
       setQ('');
       setOptions(['', '']);
+      optRefs.current = [];
     }
   }, [isOpen]);
 
@@ -58,6 +60,7 @@ export const PollCreateModal = ({ isOpen, onClose, thread }) => {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') create(); }}
               placeholder="Poll question — e.g. Which topic next?"
               maxLength={140}
               autoFocus
@@ -67,6 +70,17 @@ export const PollCreateModal = ({ isOpen, onClose, thread }) => {
                 <Input
                   value={o}
                   onChange={(e) => setOpt(i, e.target.value)}
+                  ref={(el) => (optRefs.current[i] = el)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    if (i === options.length - 1 && options.length < 6) {
+                      setOptions((prev) => [...prev, '']);
+                      setTimeout(() => optRefs.current[options.length]?.focus(), 0);
+                    } else {
+                      optRefs.current[i + 1]?.focus();
+                    }
+                  }}
                   placeholder={`Option ${i + 1}`}
                   maxLength={80}
                   minW={0}

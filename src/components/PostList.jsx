@@ -431,6 +431,7 @@ const MergeModal = ({
                 placeholder="Search questions…"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
                 size="sm"
               />
               <Text fontSize="xs" opacity={0.65}>
