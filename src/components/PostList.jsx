@@ -319,6 +319,8 @@ const QuestionCard = ({
                     icon={<WarningIcon />}
                     color={flagCount > 0 ? 'orange.400' : 'gray.500'}
                     onClick={() => onFlag(post.key)}
+                    ml="auto"
+                    flexShrink={0}
                   />
                 </Tooltip>
               )}
