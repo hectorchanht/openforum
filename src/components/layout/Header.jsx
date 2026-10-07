@@ -197,32 +197,28 @@ const Header = () => {
   const loggedIn = !!gun.user().is;
 
   // In a room (or on your private page) the header collapses to ONE slim
-  // row: the big wordmark row is redundant once you're inside, so it goes
-  // away and reclaims a full row of vertical space on mobile.
+  // row of controls only. The room name no longer lives up here — it gets
+  // its own hero section below (RoomHeader), so it never competes with the
+  // header buttons for space on narrow screens.
   const compactBar = (
-    <HStack spacing={1} w="100%" alignItems="center">
+    <HStack spacing={1} w="100%" alignItems="center" justifyContent="space-between">
       <Box onClick={exitThread} cursor="pointer" flexShrink={0} lineHeight={0}
-        aria-label="back to home" title="Back to home">
+        aria-label="back to home" title={thread && !loggedIn ? `Back to home (room: ${thread})` : "Back to home"}>
         <LogoMark size={26} />
       </Box>
-      <Text
-        fontSize="sm" fontWeight="bold" color="purple.300"
-        minW={0} flex={1} isTruncated
-        title={loggedIn ? "Your private page" : `Room: ${thread}`}
-      >
-        {loggedIn ? `u/${gun.user()?.is?.alias}` : `🏠 ${thread}`}
-      </Text>
-      <ThoughtHeapButton />
-      <RelayStatus />
-      <ToggleColor />
-      <IconButton
-        variant="ghost"
-        onClick={loggedIn ? logout : exitThread}
-        color="red.400"
-        icon={<CloseIcon />}
-        aria-label={loggedIn ? "log out" : "exit room"}
-        flexShrink={0}
-      />
+      <HStack spacing={0} alignItems="center">
+        <ThoughtHeapButton />
+        <RelayStatus />
+        <ToggleColor />
+        <IconButton
+          variant="ghost"
+          onClick={loggedIn ? logout : exitThread}
+          color="red.400"
+          icon={<CloseIcon />}
+          aria-label={loggedIn ? "log out" : "exit room"}
+          flexShrink={0}
+        />
+      </HStack>
     </HStack>
   );
 

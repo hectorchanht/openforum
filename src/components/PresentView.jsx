@@ -1,34 +1,38 @@
-import { Badge, Box, HStack, Text, VStack } from "@chakra-ui/react";
+import { Badge, Box, HStack, Progress, Text, VStack } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAtom } from "jotai";
 import React from "react";
-import { countKeys, usePosts, usePostStatus, useThreadMeta, useVotes } from "../libs/hooks";
+import { countKeys, usePosts, usePostStatus, usePolls, useThreadMeta, useVotes } from "../libs/hooks";
 import { threadIdAtom } from "../libs/jotaiAtoms";
 
 // Present mode: open /<room>?present=1 on the projector/second screen.
-// Shows ONLY the spotlighted question, huge — and updates live as the host
-// spotlights different questions. No chrome, no voting, just the question.
+// Shows the spotlighted question huge (updates live as the host moves on),
+// plus any open poll with live results — the two things a projector
+// audience needs to see. No chrome, no voting, just the show.
 const PresentView = () => {
   const [thread] = useAtom(threadIdAtom);
   const { meta } = useThreadMeta(thread);
   const posts = usePosts(thread, null);
   const votes = useVotes(thread);
   const status = usePostStatus(thread);
+  const polls = usePolls(thread);
 
   const q = meta?.discussingKey
     ? posts.find((p) => p.key === meta.discussingKey)
     : null;
   const answered = q ? !!status[q.key]?.answered : false;
+  // usePolls returns newest-first — the first open one is the live poll.
+  const livePoll = polls.find((p) => !p.closed) || null;
 
   return (
-    <Box
+    <VStack
       minH="70vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
+      justify="center"
       textAlign="center"
       px={4}
       py={10}
+      spacing={10}
+      align="stretch"
     >
       <AnimatePresence mode="wait">
         {!q ? (
@@ -90,7 +94,63 @@ const PresentView = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </Box>
+
+      {/* Live poll — projector shows results as votes stream in */}
+      {livePoll && (
+        <Box
+          w="100%"
+          maxW="760px"
+          mx="auto"
+          layerStyle="glass"
+          p={{ base: 5, md: 7 }}
+          borderRadius="2xl"
+          textAlign="left"
+        >
+          <Text
+            fontSize="xs"
+            fontWeight="bold"
+            letterSpacing="0.3em"
+            bgGradient="linear(to-r, #67e8f9, #a78bfa)"
+            bgClip="text"
+          >
+            📊 LIVE POLL
+          </Text>
+          <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="extrabold" mt={2} mb={5} wordBreak="break-word">
+            {String(livePoll.q)}
+          </Text>
+          <VStack align="stretch" spacing={4}>
+            {livePoll.options.map((opt, i) => {
+              const c = livePoll.counts[i] || 0;
+              const pct = livePoll.total > 0 ? Math.round((c / livePoll.total) * 100) : 0;
+              return (
+                <Box key={i}>
+                  <HStack justify="space-between" mb={1.5} spacing={3}>
+                    <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" minW={0} wordBreak="break-word">
+                      {String(opt)}
+                    </Text>
+                    <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="extrabold" flexShrink={0}>
+                      {c} <Text as="span" opacity={0.6} fontWeight="semibold">· {pct}%</Text>
+                    </Text>
+                  </HStack>
+                  <Progress
+                    value={pct}
+                    size="lg"
+                    borderRadius="full"
+                    colorScheme="purple"
+                    bg="whiteAlpha.100"
+                    hasStripe
+                    isAnimated
+                  />
+                </Box>
+              );
+            })}
+          </VStack>
+          <Text fontSize="sm" opacity={0.6} mt={4}>
+            ▲ {livePoll.total} vote{livePoll.total !== 1 ? 's' : ''} — updates live
+          </Text>
+        </Box>
+      )}
+    </VStack>
   );
 };
 

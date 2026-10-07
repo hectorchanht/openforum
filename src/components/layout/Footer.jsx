@@ -1,14 +1,13 @@
-import { CopyIcon, ExternalLinkIcon, HamburgerIcon } from "@chakra-ui/icons";
+import { CopyIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import {
   Box,
   Divider,
+  Flex,
   Icon,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
+  Link,
+  SimpleGrid,
   Text,
+  VStack,
   useColorMode,
 } from "@chakra-ui/react";
 import { useAtom } from "jotai";
@@ -23,6 +22,8 @@ const GithubIcon = ({ colorMode, ...props }) => (
   </Icon>
 );
 
+const REPO_URL = "https://github.com/hectorchanht/openforum";
+
 const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -35,6 +36,20 @@ const copyToClipboard = async (text) => {
     document.body.removeChild(ta);
   }
 };
+
+const FooterLink = ({ children, ...props }) => (
+  <Link
+    fontSize="sm"
+    opacity={0.75}
+    _hover={{ opacity: 1, textDecoration: 'none', color: 'purple.300' }}
+    display="inline-flex"
+    alignItems="center"
+    gap={1.5}
+    {...props}
+  >
+    {children}
+  </Link>
+);
 
 const Footer = () => {
   const { colorMode } = useColorMode();
@@ -49,16 +64,75 @@ const Footer = () => {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const openPresent = () => {
+    if (!thread) return;
+    window.open(`${window.location.origin}/${thread}?present=1`, '_blank', 'noopener');
+  };
+
   return (
-    <Box as="footer" mt="auto" pt={6}>
-      <Divider opacity={0.15} mb={3} />
-      <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <LogoMark size={20} />
-          <Text fontSize="xs" opacity={0.55}>
-            OpenForum — decentralized live Q&amp;A · MIT
+    <Box as="footer" mt="auto" pt={8} pb={3}>
+      <Divider opacity={0.15} mb={6} />
+      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={6}>
+        {/* Brand */}
+        <VStack align="start" spacing={2}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <LogoMark size={24} />
+            <Text fontWeight="extrabold" fontSize="md">OpenForum</Text>
+          </Box>
+          <Text fontSize="sm" opacity={0.65} lineHeight="1.6" maxW="320px">
+            Live anonymous Q&amp;A for events — open a room, share the link,
+            the audience asks and upvotes. No signup, no app.
           </Text>
-        </Box>
+        </VStack>
+
+        {/* In this room — contextual actions, visible where they're useful */}
+        <VStack align="start" spacing={2}>
+          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="0.08em" opacity={0.5}>
+            In this room
+          </Text>
+          {thread ? (
+            <>
+              <FooterLink as="button" onClick={copyThreadLink}>
+                <CopyIcon boxSize={3.5} />
+                {copied ? 'Link copied!' : 'Copy room link'}
+              </FooterLink>
+              <FooterLink as="button" onClick={openPresent}>
+                🎙 Present view
+              </FooterLink>
+              <FooterLink as="button" onClick={copyThreadLink} title={`${window.location.origin}/${thread}`}>
+                <Text as="span" opacity={0.7}>🔗 {typeof window !== 'undefined' ? `${window.location.host}/${thread}` : thread}</Text>
+              </FooterLink>
+            </>
+          ) : (
+            <Text fontSize="sm" opacity={0.5}>
+              Join a room to get quick share actions here.
+            </Text>
+          )}
+        </VStack>
+
+        {/* Project */}
+        <VStack align="start" spacing={2}>
+          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="0.08em" opacity={0.5}>
+            Project
+          </Text>
+          <FooterLink href={REPO_URL} isExternal>
+            <GithubIcon colorMode={colorMode} boxSize={4} />
+            GitHub repo <ExternalLinkIcon boxSize={3} />
+          </FooterLink>
+          <FooterLink href={`${REPO_URL}/issues`} isExternal>
+            🐛 Report a bug <ExternalLinkIcon boxSize={3} />
+          </FooterLink>
+          <Text fontSize="sm" opacity={0.5}>
+            MIT licensed — fork it, run your own relay.
+          </Text>
+        </VStack>
+      </SimpleGrid>
+
+      <Divider opacity={0.1} mb={3} />
+      <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+        <Text fontSize="xs" opacity={0.5}>
+          © {new Date().getFullYear()} OpenForum · Questions sync through the Gun relay — no accounts, no tracking.
+        </Text>
         {/* Relay status: silent when healthy (the green "connected" was always
             on — pure noise). Only the failure state renders. */}
         {relayOffline && (
@@ -67,32 +141,7 @@ const Footer = () => {
             relay disconnected — local only
           </Box>
         )}
-        <Menu placement="top-end">
-          <MenuButton
-            as={IconButton}
-            variant="ghost"
-            aria-label="more"
-            icon={<HamburgerIcon />}
-            size="sm"
-            opacity={0.7}
-            _hover={{ opacity: 1 }}
-          />
-          <MenuList textAlign="left">
-            <MenuItem icon={<CopyIcon />} onClick={copyThreadLink} isDisabled={!thread}>
-              {copied ? 'Link copied!' : thread ? 'Copy room link' : 'Copy room link (no room open)'}
-            </MenuItem>
-            <MenuItem
-              as="a"
-              href="https://github.com/hectorchanht/openforum"
-              target="_blank"
-              rel="noopener noreferrer"
-              icon={<GithubIcon colorMode={colorMode} boxSize={4} />}
-            >
-              GitHub repo <ExternalLinkIcon mx="2px" />
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      </Box>
+      </Flex>
     </Box>
   );
 };

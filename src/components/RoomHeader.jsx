@@ -35,6 +35,7 @@ import {
 } from "../libs/hooks";
 import {
   authorFilterAtom,
+  densityAtom,
   myOnlyAtom,
   searchAtom,
   sortModeAtom,
@@ -203,6 +204,7 @@ const RoomHeader = () => {
   const [thread] = useAtom(threadIdAtom);
   const [sortMode, setSortMode] = useAtom(sortModeAtom);
   const [search, setSearch] = useAtom(searchAtom);
+  const [density, setDensity] = useAtom(densityAtom);
   const { meta, isHost, expired, closed, readOnly, updateMeta, hostId, claimHost, needsCreation } = useThreadMeta(thread);
   const posts = usePosts(thread, null);
   const votes = useVotes(thread);
@@ -400,7 +402,9 @@ const RoomHeader = () => {
   return (
     <Box layerStyle="glass" p={4} mb={4}>
       <VStack align="stretch" spacing={3}>
-        {/* Title / description (host-editable) */}
+        {/* Room hero — the room name lives here, below the slim header,
+            with its own breathing room instead of competing for header
+            space. (host-editable) */}
         <Box>
           {editing ? (
             <VStack align="stretch" spacing={2}>
@@ -422,13 +426,28 @@ const RoomHeader = () => {
               </HStack>
             </VStack>
           ) : (
-            <HStack align="start" justify="space-between">
+            <HStack align="start" justify="space-between" spacing={3}>
               <Box minW={0}>
-                <Text fontSize="xl" fontWeight="extrabold" lineHeight="1.2">
+                <Text
+                  fontSize="xs"
+                  fontWeight="bold"
+                  letterSpacing="0.14em"
+                  textTransform="uppercase"
+                  color="purple.300"
+                  mb={1}
+                >
+                  Room
+                </Text>
+                <Text
+                  fontSize={{ base: '2xl', md: '3xl' }}
+                  fontWeight="extrabold"
+                  lineHeight="1.15"
+                  wordBreak="break-word"
+                >
                   {meta.title || thread}
                 </Text>
                 {meta.desc && (
-                  <Text fontSize="sm" opacity={0.75} mt={1}>{meta.desc}</Text>
+                  <Text fontSize="md" opacity={0.75} mt={1.5}>{meta.desc}</Text>
                 )}
               </Box>
               {isHost && (
@@ -445,6 +464,7 @@ const RoomHeader = () => {
                       setDescDraft(meta.desc || '');
                       setEditing(true);
                     }}
+                    flexShrink={0}
                   />
                 </Tooltip>
               )}
@@ -512,6 +532,17 @@ const RoomHeader = () => {
 
         {/* Audience actions — the few things everyone needs */}
         <HStack spacing={2} flexWrap="wrap">
+          <Tooltip label={density === 'compact' ? 'Switch to comfortable spacing' : 'Switch to compact spacing — fit more questions on screen'}>
+            <Button
+              size="sm"
+              minH="40px"
+              variant="outline"
+              onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
+              aria-pressed={density === 'compact'}
+            >
+              {density === 'compact' ? '↕️ Comfortable' : '↕️ Compact'}
+            </Button>
+          </Tooltip>
           <Tooltip label={notify.enabled ? 'Turn off new-question alerts' : 'Get a ping when a new question arrives'}>
             <Button
               size="sm"

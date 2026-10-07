@@ -1,4 +1,4 @@
-import { ChatIcon, CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
+import { BellIcon, ChatIcon, CheckIcon, CloseIcon, DeleteIcon, StarIcon, TriangleUpIcon, ViewIcon, WarningIcon } from "@chakra-ui/icons";
 import {
   Avatar, Badge, Box, Button, Collapse, HStack, IconButton, Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Skeleton, Text, Textarea,
@@ -11,9 +11,9 @@ import gun from "../libs/gun";
 import { avatarFor, pseudonym, timeAgo, uniqueKey } from "../libs/helpers";
 import {
   addReply, countKeys, deleteReply, getVoterId, mergeInto, unmerge,
-  useAuthors, usePosts, usePostStatus, useReplies, useThreadMeta, useVotes,
+  useAuthors, useFollowedQuestions, usePosts, usePostStatus, useReplies, useThreadMeta, useVotes,
 } from "../libs/hooks";
-import { aliasAtom, authorFilterAtom, myOnlyAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
+import { aliasAtom, authorFilterAtom, densityAtom, myOnlyAtom, searchAtom, sortModeAtom, statusFilterAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
 const MotionBox = motion(Box);
 const FLAG_THRESHOLD = 3; // N audience flags auto-hide a post from non-hosts
@@ -27,7 +27,9 @@ const QuestionCard = ({
   isMine, mutedAuthor,
   replies, onSendReply, onDeleteReply,
   mergedCount, onOpenMerge, onOpenManageMerged, orphanedMerge, onUnmerge,
+  followed, onToggleFollow, density,
 }) => {
+  const compact = density === 'compact';
   const pinned = !!(thread && meta && meta.pinnedKey === post.key);
   const answered = !!status?.answered;
   const spotlighted = !!(thread && meta && meta.discussingKey === post.key);
@@ -80,14 +82,14 @@ const QuestionCard = ({
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       layerStyle="glass"
-      p={3}
+      p={compact ? 2 : 3}
       opacity={hidden || mutedAuthor ? 0.55 : 1}
-      borderColor={spotlighted ? 'purple.400' : pinned ? 'yellow.400' : isMine ? 'cyan.400' : undefined}
-      borderWidth={spotlighted || pinned || isMine ? '2px' : '1px'}
+      borderColor={spotlighted ? 'purple.400' : pinned ? 'yellow.400' : followed ? 'teal.400' : isMine ? 'cyan.400' : undefined}
+      borderWidth={spotlighted || pinned || followed || isMine ? '2px' : '1px'}
     >
       <HStack align="flex-start" spacing={3}>
         {thread && (
-          <VStack spacing={1} minW="56px" pt={1}>
+          <VStack spacing={1} minW={compact ? '48px' : '56px'} pt={compact ? 0 : 1}>
             <Tooltip label={voteLabel}>
               <IconButton
                 size="md"
@@ -166,10 +168,26 @@ const QuestionCard = ({
                 </Badge>
               </Tooltip>
             )}
+            {/* Follow — sits at the row's end so it never shifts other content */}
+            <Tooltip label={followed ? 'Following — tap to unfollow' : 'Follow this question — get pinged when it\u2019s answered'}>
+              <IconButton
+                size="xs"
+                variant="ghost"
+                aria-label={followed ? 'unfollow this question' : 'follow this question'}
+                aria-pressed={followed}
+                icon={<BellIcon />}
+                color={followed ? 'yellow.400' : 'gray.500'}
+                onClick={onToggleFollow}
+                minW="32px"
+                minH="32px"
+                ml="auto"
+                flexShrink={0}
+              />
+            </Tooltip>
           </HStack>
 
           <Text
-            fontSize="md"
+            fontSize={compact ? 'sm' : 'md'}
             lineHeight="1.5"
             wordBreak="break-word"
             textDecoration={answered ? 'none' : undefined}
@@ -506,6 +524,47 @@ const PostList = () => {
   // Merge dialog: { mode: 'merge', sourceKey } | { mode: 'manage', manageKey }
   const [mergeDlg, setMergeDlg] = React.useState(null);
 
+  // Follow a question — ping when a followed question gets answered.
+  const [density] = useAtom(densityAtom);
+  const { followed, toggleFollow, isFollowed, pruneFollows } = useFollowedQuestions(thread);
+  const answeredRef = React.useRef({});
+  // prime answered state on room switch so old answers don't re-notify on
+  // load; also drop follows whose questions are gone.
+  React.useEffect(() => {
+    const m = {};
+    posts.forEach((p) => { m[p.key] = !!((status[p.key] || {}).answered); });
+    answeredRef.current = m;
+    pruneFollows(posts.map((p) => p.key));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread]);
+
+  React.useEffect(() => {
+    if (!thread) return;
+    followed.forEach((key) => {
+      const answered = !!((status[key] || {}).answered);
+      if (answered && !answeredRef.current[key]) {
+        const q = posts.find((p) => p.key === key);
+        const text = q ? String(q.text) : 'A question you follow';
+        toast({
+          title: '✅ Your followed question was answered',
+          description: text.slice(0, 120),
+          status: 'success',
+          duration: 4000,
+          isClosable: true,
+        });
+        try {
+          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            // eslint-disable-next-line no-new
+            new Notification(`✅ Answered — ${thread}`, { body: text.slice(0, 140) });
+          }
+        } catch {
+          /* notifications blocked — the toast still shows */
+        }
+      }
+      answeredRef.current[key] = answered;
+    });
+  }, [status, followed, thread, posts, toast]);
+
   // Merge resolution: st/<key>.mergedInto points at the merge target.
   // Follow the chain to the root (cycle-guarded); merged sources hide from
   // the list and their votes count toward the root's displayed total.
@@ -815,6 +874,9 @@ const PostList = () => {
             onOpenMerge={() => setMergeDlg({ mode: 'merge', sourceKey: p.key })}
             onOpenManageMerged={() => setMergeDlg({ mode: 'manage', manageKey: p.key })}
             onUnmerge={handleUnmerge}
+            followed={isFollowed(p.key)}
+            onToggleFollow={() => toggleFollow(p.key)}
+            density={density}
           />
         ))}
       </AnimatePresence>

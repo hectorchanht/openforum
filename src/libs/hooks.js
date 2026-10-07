@@ -584,3 +584,53 @@ export const usePolls = (thread) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defs, votes]);
 };
+
+// Follow a question: localStorage-backed set of post keys per room. The
+// PostList watches followed questions and pings when one gets answered.
+export const useFollowedQuestions = (thread) => {
+  const read = React.useCallback(() => {
+    if (!thread || typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem(`rg_follows_${thread}`);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }, [thread]);
+
+  const [followed, setFollowed] = React.useState(read);
+
+  // reload when switching rooms
+  React.useEffect(() => {
+    setFollowed(read());
+  }, [thread, read]);
+
+  const persist = (next) => {
+    setFollowed(next);
+    try {
+      if (thread && typeof window !== 'undefined') {
+        window.localStorage.setItem(`rg_follows_${thread}`, JSON.stringify(next));
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const toggleFollow = (key) => {
+    persist(
+      followed.includes(key)
+        ? followed.filter((k) => k !== key)
+        : [...followed, key]
+    );
+  };
+  const isFollowed = (key) => followed.includes(key);
+  // drop follows whose questions no longer exist (deleted by host)
+  const pruneFollows = (liveKeys) => {
+    const live = new Set(liveKeys);
+    const next = followed.filter((k) => live.has(k));
+    if (next.length !== followed.length) persist(next);
+  };
+
+  return { followed, toggleFollow, isFollowed, pruneFollows };
+};
