@@ -50,6 +50,18 @@ const AddPost = () => {
   )
   const handleInputChange = (e) => setValue(e?.target?.value);
 
+  // Autogrow composer: 1 line by default, grows with content (capped, then
+  // it scrolls internally). Manual drag-resize still works — Chakra keeps
+  // resize: vertical.
+  const taRef = React.useRef(null);
+  const autogrow = React.useCallback(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+  }, []);
+  React.useEffect(() => { autogrow(); }, [value, autogrow, thread]);
+
   // Duplicate guard: fuzzy-match what they're typing against existing posts.
   const similar = React.useMemo(
     () => (thread && value.trim() ? findSimilarPost(value, posts) : null),
@@ -123,11 +135,14 @@ const AddPost = () => {
     <Box layerStyle="glass" p={3}>
       <HStack align="flex-end" spacing={2}>
         <Textarea
+          ref={taRef}
           value={value}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           isDisabled={readOnly}
-          rows={2}
+          rows={1}
+          resize="vertical"
+          overflowY="auto"
           fontSize="md"
           minW={0}
           placeholder={disabledMsg || (thread ? 'Ask a question… (Enter to send)' : 'leave secrets here for people to find ~')}
