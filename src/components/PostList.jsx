@@ -89,17 +89,17 @@ const QuestionCard = ({
     >
       <HStack align="flex-start" spacing={3}>
         {thread && (
-          <VStack spacing={1} minW={compact ? '48px' : '56px'} pt={compact ? 0 : 1}>
+          <VStack spacing={1} minW={compact ? '44px' : '48px'} pt={compact ? 0 : 1}>
             <Tooltip label={voteLabel}>
               <IconButton
                 size="md"
-                minW="48px"
-                minH="48px"
+                minW="44px"
+                minH="44px"
                 variant={voted ? 'solid' : 'ghost'}
                 colorScheme={voted ? 'cyan' : 'gray'}
                 aria-label={voted ? 'remove upvote' : 'upvote'}
                 aria-pressed={voted}
-                icon={<TriangleUpIcon boxSize={6} />}
+                icon={<TriangleUpIcon boxSize={5} />}
                 onClick={() => onVote(post.key)}
                 isDisabled={voteDisabled}
                 borderRadius="xl"

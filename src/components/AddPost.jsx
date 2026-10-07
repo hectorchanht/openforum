@@ -136,8 +136,8 @@ const AddPost = () => {
           aria-label="post"
           colorScheme="purple"
           size="md"
-          minW="48px"
-          minH="48px"
+          minW="44px"
+          minH="44px"
           isDisabled={!value.trim() || readOnly}
           onClick={submitValue}
           icon={<CheckIcon boxSize={5} />}
