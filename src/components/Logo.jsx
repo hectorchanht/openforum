@@ -8,7 +8,9 @@ export const LogoMark = ({ size = 32, ...rest }) => (
   <Image
     src="/logo.png"
     alt="OpenQ logo"
-    boxSize={size}
+    /* string px: a bare number would hit the Chakra spacing scale
+       (boxSize={64} → 16rem = 256px — the giant-icon bug) */
+    boxSize={`${size}px`}
     borderRadius="22%"
     display="block"
     flexShrink={0}
