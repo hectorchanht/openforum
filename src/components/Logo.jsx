@@ -1,12 +1,16 @@
 import { HStack, Image, Text } from "@chakra-ui/react";
 import React from "react";
 
-// Logo mark — the favicon Q artwork (public/logo.png), used everywhere:
-// header, footer, hero. One source of truth, so the mark can never drift
-// from the icon again.
+// Logo mark — the favicon Q artwork, used everywhere: header, footer,
+// hero. One source of truth, so the mark can never drift from the icon
+// again. Serves a size-appropriate file: no reason to ship the 74KB
+// 512px PNG to render a 26px header mark.
+const srcForSize = (size) =>
+  size <= 40 ? "/logo-64.png" : size <= 96 ? "/logo-128.png" : "/logo.png";
+
 export const LogoMark = ({ size = 32, ...rest }) => (
   <Image
-    src="/logo.png"
+    src={srcForSize(size)}
     alt="OpenQ logo"
     /* string px: a bare number would hit the Chakra spacing scale
        (boxSize={64} → 16rem = 256px — the giant-icon bug) */

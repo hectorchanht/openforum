@@ -27,6 +27,7 @@ const Hero = () => (
         <Logo size={64} wordmark wordmarkFontSize="clamp(1.75rem, 9vw, 2.75rem)" />
       </Box>
       <Heading
+        as="h1"
         size="2xl"
         mb={3}
         bgGradient="linear(to-r, #a78bfa, #e879f9)"

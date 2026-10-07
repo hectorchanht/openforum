@@ -438,7 +438,7 @@ const RoomHeader = () => {
                   color="purple.300"
                   mb={1}
                 >
-                  Room
+                  📋 The queue
                 </Text>
                 <Text
                   fontSize={{ base: '2xl', md: '3xl' }}
