@@ -144,7 +144,7 @@ const Header = () => {
         <Input
           ref={usernameRef}
           value={username}
-          placeholder="Room name — e.g. town-hall"
+          placeholder="Queue name — e.g. town-hall"
           onChange={setUsername}
           onKeyDown={handleEnterShortSecret}
           size="lg"
@@ -155,10 +155,10 @@ const Header = () => {
           _focus={{ zIndex: 1 }}
         />
         <IconButton
-          aria-label={privateMode ? 'open your private page' : 'join room'}
+          aria-label={privateMode ? 'open your private page' : 'join the queue'}
           title={privateMode
-            ? 'Private page: with an 8+ character password this opens your private page (u/your-name) instead of the room'
-            : 'Join room — no signup needed'}
+            ? 'Private page: with an 8+ character password this opens your private page (u/your-name) instead of the queue'
+            : 'Join the queue — no signup needed'}
           isDisabled={!username.length || !!alertMsg.length}
           variant="solid"
           colorScheme={privateMode ? 'purple' : 'green'}
@@ -174,9 +174,9 @@ const Header = () => {
       </HStack>
       <Text fontSize="xs" opacity={0.6} px={1} lineHeight="1.5">
         {privateMode ? (
-          <>🔑 <b>Private page mode</b> — the purple arrow opens <b>your private page</b> (u/{username.replace(/ /g, '') || 'your-name'}), not the room. Clear the password to join the room instead.</>
+          <>🔑 <b>Private page mode</b> — the purple arrow opens <b>your private page</b> (u/{username.replace(/ /g, '') || 'your-name'}), not the queue. Clear the password to join the queue instead.</>
         ) : (
-          <>💡 Type a room name and hit <b>→</b> to join the discussion. No signup, no app.</>
+          <>💡 Type a queue name and hit <b>→</b> to join the discussion. No signup, no app.</>
         )}
       </Text>
       {showPassword && (
@@ -203,7 +203,7 @@ const Header = () => {
   const compactBar = (
     <HStack spacing={1} w="100%" alignItems="center" justifyContent="space-between">
       <Box onClick={exitThread} cursor="pointer" flexShrink={0} lineHeight={0}
-        aria-label="back to home" title={thread && !loggedIn ? `Back to home (room: ${thread})` : "Back to home"}>
+        aria-label="back to home" title={thread && !loggedIn ? `Back to home (queue: ${thread})` : "Back to home"}>
         <LogoMark size={26} />
       </Box>
       <HStack spacing={0} alignItems="center">
@@ -215,7 +215,7 @@ const Header = () => {
           onClick={loggedIn ? logout : exitThread}
           color="red.400"
           icon={<CloseIcon />}
-          aria-label={loggedIn ? "log out" : "exit room"}
+          aria-label={loggedIn ? "log out" : "exit queue"}
           flexShrink={0}
         />
       </HStack>

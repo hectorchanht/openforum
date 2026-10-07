@@ -1,6 +1,6 @@
 # ❓ OpenQ
 
-**A forum in a queue** — live Q&A for events. Open a room, share the
+**A forum in a queue** — live Q&A for events. Open a queue, share the
 link, the audience queues their questions and upvotes the best to the front. No signup, no app, no friction.
 
 Live demo: [openq.hectorchan.com](https://openq.hectorchan.com)
@@ -11,32 +11,32 @@ Text data is stored with [Gun.js](https://gun.eco), a decentralized graph
 database, in 3 levels:
 
 1. **Public landing page** — anything goes, visible to everyone.
-2. **A room** — type a room name and hit the green arrow
-   (or visit `/room-name`) to join a room only people with the name can find.
+2. **A queue** — type a queue name and hit the green arrow
+   (or visit `/queue-name`) to join a queue only people with the name can find.
 3. **A private page** — type a name + a `password`
    (8+ chars) and hit the purple arrow. First login creates the account;
-   it opens your own private page. Press `Esc` to leave a room.
+   it opens your own private page. Press `Esc` to leave a queue.
 
 ## Event Q&A features
 
-Threads double as live Q&A rooms:
+Threads double as live Q&A queues:
 
 - **Upvotes** — every question has a big ▲ button with a vote count. Click to vote,
   click again to retract. Votes are stored per post at
   `t/<thread>/v/<postKey>` as `{voterId: 1}`; your anonymous voter id lives in
   `localStorage` (`rg_vid`). Cards animate as they re-sort.
-- **Host controls** — the first visitor to a room with no host becomes the
+- **Host controls** — the first visitor to a queue with no host becomes the
   host by creating it (`t/<thread>/meta` = `{hostId, createdAt, expiresAt, closed}`).
   The host id is kept in `localStorage` (`rg_host_<thread>`). Hosts can pin one
   post to the top, delete posts (votes and status are cleared too), and close/reopen the
-  room. All host controls are client-enforced (see caveat below).
+  queue. All host controls are client-enforced (see caveat below).
 - **Mark answered** — the host taps ✓ on a question to mark it answered
   (stored at `t/<thread>/st/<postKey>` as `{answered, hidden, flags: {voterId: 1}}`).
   Answered questions get a green badge; filter tabs switch between
   🟢 Open / ✅ Answered / 📋 All.
 - **Spotlight + present mode** — the host spotlights a question ("🎙 now discussing",
   stored as `meta.discussingKey`) and it renders as a teleprompter-style banner
-  in the room. Open `/<room>?present=1` on a projector/second screen for a
+  in the queue. Open `/<queue>?present=1` on a projector/second screen for a
   full-screen live view showing only the spotlighted question — it updates
   automatically as the host moves on.
 - **Search & sort** — a search box filters questions as they arrive; sort by
@@ -51,11 +51,11 @@ Threads double as live Q&A rooms:
 - **Host notifications** — opt-in toggle: a browser notification + subtle ping
   whenever a new question arrives (permission asked on toggle, choice persisted).
 - **Live stats** — question count, total votes, and ~participants
-  (distinct voter ids from votes + author ids) in the room header.
+  (distinct voter ids from votes + author ids) in the queue header.
 - **CSV export** — the host downloads every question with author pseudonym,
   votes, status (answered/open/hidden), flag count, and timestamp.
-- **Room title & description** — host-editable (`meta.title`, `meta.desc`),
-  shown at the top of the room.
+- **Queue title & description** — host-editable (`meta.title`, `meta.desc`),
+  shown at the top of the queue.
 - **Anonymous avatars** — each post gets a deterministic emoji+color badge
   derived from the asker's anonymous id (stored additively at
   `t/<thread>/a/<postKey>`; old posts just show a default).
@@ -65,7 +65,7 @@ Threads double as live Q&A rooms:
   it, and every viewer sees it as a tooltip. Your own questions get a cyan ring
   + "you" badge so you can spot them, and the 🙋 **Mine** chip filters the list
   to just your questions.
-- **Host Authors panel** — lists every distinct author in the room with their
+- **Host Authors panel** — lists every distinct author in the queue with their
   question count and total votes received. Click a row to filter the question
   list to that author (combines with the Open/Answered/All tabs and search).
   Each row has a **Mute** button: muted authors' questions are hidden from the
@@ -85,24 +85,24 @@ Threads double as live Q&A rooms:
   Client-enforced — and replies post directly (they don't go through the
   pre-moderation queue).
 - **📊 Live polls** — the host launches single-choice polls (question + 2–6
-  options) from the room header. Poll defs live at `t/<thread>/polls/<pollId>` =
+  options) from the queue header. Poll defs live at `t/<thread>/polls/<pollId>` =
   `{q, options, by, createdAt, closed}`; votes at
   `t/<thread>/polls/<pollId>/votes/<voterId>` = option index — one vote per
   browser, changeable while the poll is open. The audience sees animated result
   bars with counts and %, plus a "✓ you voted" state. The host can close (freeze
   results) / reopen / delete a poll. Polls render in a collapsible section above
   the question list and are included in the CSV export. Client-enforced.
-- **🗳️ Vote budget** — each browser gets a vote budget per room: default 5, the
+- **🗳️ Vote budget** — each browser gets a vote budget per queue: default 5, the
   host can set 1–10 or Unlimited (`meta.voteBudget`; missing = 5). Upvoting
   spends one, retracting refunds one. The header shows "🗳️ N votes left"; at zero
   the ▲ buttons disable with a hint to retract a vote. The spent count is derived
   honestly from the graph — `t/<thread>/v/<postKey>` entries containing your
   voter id — not a localStorage counter. Client-enforced.
 - **Host key / co-hosts** — the host id lives in `localStorage` (`rg_host_<thread>`),
-  so clearing site data orphans the room. The room header's **🔑 Host key** panel
+  so clearing site data orphans the queue. The queue header's **🔑 Host key** panel
   shows the key with a copy button: save it, enter it on another device to regain
   host (**🔑 Have a host key?** claim box), or share it to add a co-host. Anyone
-  holding the key can moderate the room. Note: the key is a *shared secret*, not
+  holding the key can moderate the queue. Note: the key is a *shared secret*, not
   cryptographic auth — any client that can write to the Gun graph could overwrite
   `meta.hostId` directly (last-writer-wins), so treat it like a password.
 - **Pre-moderation mode** — host toggle (`meta.moderated`). When on, audience
@@ -120,15 +120,15 @@ Threads double as live Q&A rooms:
   the target is deleted, merged sources stay hidden from the audience; the host
   still sees them flagged ("merged into a deleted question") with an Unmerge
   button, so nothing is ever permanently stuck. Client-enforced.
-- **Expiring rooms** — when creating a room, the host picks a lifetime:
-  1 hour, 24 hours, 7 days, or never. The room view shows a live countdown.
-  Expired or closed rooms are read-only (posting and voting disabled, posts
+- **Expiring queues** — when opening a queue, the host picks a lifetime:
+  1 hour, 24 hours, 7 days, or never. The queue view shows a live countdown.
+  Expired or closed queues are read-only (posting and voting disabled, posts
   still readable).
 - **🧠 Thought Heap** — a private quick-capture scratchpad. Hit the 🧠 icon in
   the header (count badge shows parked thoughts), type, Enter — the thought is
-  parked instantly, tagged with the room you were in. When it's your turn,
+  parked instantly, tagged with the queue you were in. When it's your turn,
   hit **→ Question** on any item: it loads into the composer as a *draft*
-  (never auto-posts) — navigating to the tagged room first if you're elsewhere.
+  (never auto-posts) — navigating to the tagged queue first if you're elsewhere.
   Items can be edited inline, deleted, or cleared in bulk. **Heap items live in
   localStorage (`openq-heap`) only and are never written to the Gun graph —
   half-formed thoughts stay on your device.**

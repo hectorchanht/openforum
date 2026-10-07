@@ -30,9 +30,9 @@ const AddPost = () => {
   }, [heapDraft, setHeapDraft]);
 
   const disabledMsg = closed
-    ? 'Room closed by host — read-only'
+    ? 'Queue closed by host — read-only'
     : expired
-      ? 'Room expired — read-only'
+      ? 'Queue expired — read-only'
       : null;
 
   const slowSec = thread && meta ? meta.slowModeSec || 0 : 0;

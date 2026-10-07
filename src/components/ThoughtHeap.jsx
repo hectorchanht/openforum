@@ -68,7 +68,7 @@ const HeapItem = ({ item, onPromote, onUpdate, onDelete }) => {
               size="sm"
               colorScheme="purple"
               onClick={() => onPromote(item)}
-              title="Load into the room composer as a draft (not posted yet)"
+              title="Load into the queue composer as a draft (not posted yet)"
               flexShrink={0}
             >
               → Question

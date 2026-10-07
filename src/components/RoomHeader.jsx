@@ -280,7 +280,7 @@ const RoomHeader = () => {
   // card covers that state.
   if (!meta && !needsCreation) {
     return (
-      <Box layerStyle="glass" p={4} mb={4} aria-label="Loading room…">
+      <Box layerStyle="glass" p={4} mb={4} aria-label="Loading queue…">
         <VStack align="stretch" spacing={3}>
           <Skeleton height="26px" width="55%" borderRadius="md" />
           <Skeleton height="16px" width="80%" borderRadius="md" />
@@ -382,7 +382,7 @@ const RoomHeader = () => {
     setClaimOpen(false);
     toast({
       title: 'Host key saved 🔑',
-      description: 'If the key matches this room, host controls are now unlocked.',
+      description: 'If the key matches this queue, host controls are now unlocked.',
       status: 'info',
       duration: 3000,
       isClosable: true,
@@ -412,7 +412,7 @@ const RoomHeader = () => {
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') saveTitleDesc(); }}
-                placeholder="Room title — e.g. Town Hall Q&A"
+                placeholder="Queue title — e.g. Town Hall Q&A"
                 maxLength={80}
               />
               <Input
@@ -453,13 +453,13 @@ const RoomHeader = () => {
                 )}
               </Box>
               {isHost && (
-                <Tooltip label="Edit room title & description">
+                <Tooltip label="Edit queue title & description">
                   <IconButton
                     size="sm"
                     minH="40px"
                     minW="40px"
                     variant="ghost"
-                    aria-label="edit room title"
+                    aria-label="edit queue title"
                     icon={<EditIcon />}
                     onClick={() => {
                       setTitleDraft(meta.title || '');
@@ -638,7 +638,7 @@ const RoomHeader = () => {
                 </Select>
               </HStack>
               <HStack justify="space-between" flexWrap="wrap" spacing={2}>
-                <Tooltip label="How many upvotes each person gets in this room — retracting a vote refunds it">
+                <Tooltip label="How many upvotes each person gets in this queue — retracting a vote refunds it">
                   <Text fontSize="sm">🗳️ Votes per person <Text as="span" opacity={0.55} fontSize="xs">(0 = unlimited)</Text></Text>
                 </Tooltip>
                 <Input
@@ -683,7 +683,7 @@ const RoomHeader = () => {
                 colorScheme={closed ? 'green' : 'red'}
                 onClick={() => updateMeta({ closed: !closed })}
               >
-                {closed ? '🟢 Reopen room' : '🔴 Close room (read-only for everyone)'}
+                {closed ? '🟢 Reopen queue' : '🔴 Close queue (read-only for everyone)'}
               </Button>
             </VStack>
           </Collapse>
@@ -726,7 +726,7 @@ const RoomHeader = () => {
                 <Input
                   value={claimDraft}
                   onChange={(e) => setClaimDraft(e.target.value)}
-                  placeholder="Paste the room's host key…"
+                  placeholder="Paste the queue's host key…"
                   size="sm"
                   fontFamily="mono"
                   minW={0}

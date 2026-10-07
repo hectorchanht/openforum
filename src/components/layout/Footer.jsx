@@ -83,21 +83,21 @@ const Footer = () => {
             <Text fontWeight="extrabold" fontSize="md">OpenQ</Text>
           </Box>
           <Text fontSize="sm" opacity={0.65} lineHeight="1.6" maxW="320px">
-            The forum in a queue — live Q&amp;A for events. Open a room, share
+            The forum in a queue — live Q&amp;A for events. Open a queue, share
             the link, the audience queues their questions. No signup, no app.
           </Text>
         </VStack>
 
-        {/* In this room — contextual actions, visible where they're useful */}
+        {/* In this queue — contextual actions, visible where they're useful */}
         <VStack align="start" spacing={2}>
           <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="0.08em" opacity={0.5}>
-            In this room
+            In this queue
           </Text>
           {thread ? (
             <>
               <FooterLink as="button" onClick={copyThreadLink}>
                 <CopyIcon boxSize={3.5} />
-                {copied ? 'Link copied!' : 'Copy room link'}
+                {copied ? 'Link copied!' : 'Copy queue link'}
               </FooterLink>
               <FooterLink as="button" onClick={openPresent}>
                 🎙 Present view
@@ -108,7 +108,7 @@ const Footer = () => {
             </>
           ) : (
             <Text fontSize="sm" opacity={0.5}>
-              Join a room to get quick share actions here.
+              Join a queue to get quick share actions here.
             </Text>
           )}
         </VStack>

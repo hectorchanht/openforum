@@ -29,7 +29,7 @@ const FirstRunHint = ({ thread, voteBudget }) => {
           <Text fontWeight="bold" fontSize="sm">👋 Welcome to “{thread}”</Text>
           <Text fontSize="sm" opacity={0.8} lineHeight="1.6" minW={0}>
             Ask a question in the box below · tap <Text as="b">▲</Text> to upvote the ones
-            you want answered{voteBudget > 0 ? <> — you get <Text as="b">{voteBudget}</Text> votes in this room</> : null}
+            you want answered{voteBudget > 0 ? <> — you get <Text as="b">{voteBudget}</Text> votes in this queue</> : null}
             {' · '}park half-formed thoughts with <Text as="b">🧠 Heap</Text> so you don&apos;t forget them.
           </Text>
         </VStack>
@@ -57,7 +57,7 @@ const ThreadMeta = () => {
     return (
       <Box layerStyle="glass" p={5} mb={4}>
         <Text fontWeight="extrabold" fontSize="lg" mb={1}>
-          🎤 Start this room as host?
+          🎤 Start this queue as host?
         </Text>
         <Text fontSize="sm" opacity={0.8} mb={3}>
           <Text as="span" fontWeight="bold">“{thread}”</Text> has no host yet. Whoever starts it
@@ -72,7 +72,7 @@ const ThreadMeta = () => {
             ))}
           </Select>
           <Button colorScheme="purple" minH="44px" onClick={() => createThread(ttl)}>
-            Create room
+            Open queue
           </Button>
           <Button variant="ghost" minH="44px" onClick={() => setDismissed(true)}>
             Later
@@ -96,8 +96,8 @@ const ThreadMeta = () => {
         boxShadow="lg"
       >
         {closed
-          ? '🔒 Room closed by host — read-only. Questions and votes are still visible.'
-          : '⏰ Room expired — read-only. Questions and votes are still visible.'}
+          ? '🔒 Queue closed by host — read-only. Questions and votes are still visible.'
+          : '⏰ Queue expired — read-only. Questions and votes are still visible.'}
       </Box>
     );
   }

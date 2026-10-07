@@ -247,7 +247,7 @@ const PollCard = ({ thread, poll, isHost, readOnly }) => {
       )}
       {readOnly && (
         <Text fontSize="xs" opacity={0.6} mt={2}>
-          Room is read-only — voting disabled.
+          Queue is read-only — voting disabled.
         </Text>
       )}
     </Box>

@@ -36,9 +36,9 @@ const Hero = () => (
         A forum in a queue
       </Heading>
       <Text fontSize="lg" opacity={0.8} mb={6} maxW="560px" mx="auto">
-        OpenQ turns your event into a live question queue. The audience joins
-        from their phones, asks anything, and upvotes the best to the front —
-        you just work the queue from the stage. No signup, no app.
+        Anyone can open a queue — for an event, a team, or just one burning
+        question. Everyone joins from their phones: ask, discuss, upvote the
+        best to the front. No signup, no app.
       </Text>
       <Button
         size="lg"
@@ -63,7 +63,7 @@ const Hero = () => (
 
     <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} maxW="760px" mx="auto" textAlign="left">
       {[
-        { emoji: '🔗', title: '1. Open the Q', body: 'Name a room and flash the QR code. The audience joins instantly from their phones — no signup, no app to install.' },
+        { emoji: '🔗', title: '1. Open the Q', body: 'Name a queue and flash the QR code. The audience joins instantly from their phones — no signup, no app to install.' },
         { emoji: '📋', title: '2. Questions queue up', body: 'They arrive live and the crowd upvotes the best to the front of the line. Duplicates get flagged, spam gets slow mode.' },
         { emoji: '🎙', title: '3. Work the queue', body: 'Spotlight questions on the big screen, mark them answered as you go, export the results when you\u2019re done.' },
       ].map((s, i) => (
