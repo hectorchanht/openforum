@@ -1,7 +1,7 @@
 {
   "name": "OpenQ",
   "short_name": "OpenQ",
-  "description": "A live question queue for events — the audience asks from their phones and upvotes the best to the front.",
+  "description": "A live question queue for events \u2014 the audience asks from their phones and upvotes the best to the front.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -19,7 +19,7 @@
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
