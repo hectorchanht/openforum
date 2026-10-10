@@ -1,0 +1,77 @@
+// Dawn Studio sponsored strip — link config.
+//
+// ONE place to edit. Each entry: `url` + the pill's label/colors.
+// Empty `url` ("") hides that pill; fill it in later and the button
+// appears automatically — no code changes needed.
+const SPONSORED_LINKS = {
+  // Hector's own product — always set, never carries rel="sponsored".
+  tipJar: {
+    label: "☕ Tip jar",
+    url: "https://dawnlimited.gumroad.com/l/openq-tip",
+    bg: "#F0A832",
+    color: "#000",
+  },
+  // Referral links — render with rel="noopener sponsored".
+  wise: {
+    label: "Send money abroad",
+    url: "https://wise.com/invite/dic/hotungc3",
+    bg: "#9FE870",
+    color: "#000",
+  },
+  coinbase: {
+    label: "Buy crypto",
+    url: "https://advanced.coinbase.com/join/F95MLKD?src=referral-link",
+    bg: "#0052FF",
+    color: "#fff",
+  },
+  binance: {
+    label: "Trade on Binance",
+    url: "https://www.binance.com/activity/referral-entry/CPA?ref=CPA_0027L6WVRQ",
+    bg: "#F0B90B",
+    color: "#000",
+  },
+  // Placeholders — urls stay "" until Hector pastes real links in.
+  airalo: {
+    label: "eSIMs for travel",
+    url: "",
+    bg: "#00d67d",
+    color: "#000",
+  },
+  koinly: {
+    label: "Crypto taxes",
+    url: "",
+    bg: "#7c5cfc",
+    color: "#fff",
+  },
+  airwallex: {
+    label: "Business banking",
+    url: "",
+    bg: "#ff6b35",
+    color: "#000",
+  },
+};
+
+export const STORAGE_KEY = "dawn_sponsored_hidden";
+
+const hasUrl = (entry) => Boolean(entry && entry.url);
+
+export const hasTipJarLink = () => hasUrl(SPONSORED_LINKS.tipJar);
+export const hasWiseLink = () => hasUrl(SPONSORED_LINKS.wise);
+export const hasCoinbaseLink = () => hasUrl(SPONSORED_LINKS.coinbase);
+export const hasBinanceLink = () => hasUrl(SPONSORED_LINKS.binance);
+export const hasAiraloLink = () => hasUrl(SPONSORED_LINKS.airalo);
+export const hasKoinlyLink = () => hasUrl(SPONSORED_LINKS.koinly);
+export const hasAirwallexLink = () => hasUrl(SPONSORED_LINKS.airwallex);
+
+// Ordered list of referral pills with real urls (tip jar is rendered first,
+// separately, because it is Hector's own product, not a referral).
+const REFERRAL_ORDER = ["wise", "coinbase", "binance", "airalo", "koinly", "airwallex"];
+
+export const tipJar = () => SPONSORED_LINKS.tipJar;
+
+export const visibleReferralLinks = () =>
+  REFERRAL_ORDER.map((id) => ({ id, ...SPONSORED_LINKS[id] })).filter((entry) =>
+    hasUrl(entry)
+  );
+
+export default SPONSORED_LINKS;

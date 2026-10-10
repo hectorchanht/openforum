@@ -5,6 +5,7 @@ import { alertMsgAtom } from "../../libs/jotaiAtoms";
 import AlertMsg from "../AlertMsg";
 import Footer from "./Footer";
 import Header from "./Header";
+import SponsoredStrip from "./SponsoredStrip";
 
 
 const Layout = ({ children }) => {
@@ -73,6 +74,7 @@ const Layout = ({ children }) => {
         />
       </Head>
       <Header />
+      <SponsoredStrip />
       <Box as="main" flex={1} px={0}>
         {children}
       </Box>
