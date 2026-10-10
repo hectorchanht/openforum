@@ -75,3 +75,57 @@ export const visibleReferralLinks = () =>
   );
 
 export default SPONSORED_LINKS;
+
+// --- V2 hide flow ---------------------------------------------------------
+// The strip renders nothing while the flag is set. The flag is only ever
+// written by Settings after a successful license-key verification (or
+// cleared by "Show again"). The old honor-system × is gone.
+//
+// SPONSORED_HIDE_EVENT keeps the strip in sync without a reload: the strip
+// re-reads localStorage whenever the settings page changes the flag in the
+// same tab; the native "storage" event covers other tabs.
+export const SPONSORED_HIDE_EVENT = "dawn:sponsored-hidden-changed";
+
+export const isSponsoredHidden = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "1";
+  } catch {
+    return false; // storage unavailable — strip stays visible
+  }
+};
+
+export const setSponsoredHidden = (hidden) => {
+  try {
+    if (hidden) localStorage.setItem(STORAGE_KEY, "1");
+    else localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(SPONSORED_HIDE_EVENT));
+  }
+};
+
+// --- Stored tip key ------------------------------------------------------
+// The tipper's own license key, persisted on THEIR device so Settings can
+// pre-fill it (and copy it for reuse on other devices/apps). This is the
+// user's own key on their own device — localStorage is fine. It is never
+// sent anywhere except /api/verify-tip, and only on an explicit Verify
+// click (never auto-submitted on load).
+export const TIP_KEY_STORAGE_KEY = "dawn_tip_license_key";
+
+export const getStoredTipKey = () => {
+  try {
+    return localStorage.getItem(TIP_KEY_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+};
+
+export const setStoredTipKey = (key) => {
+  try {
+    localStorage.setItem(TIP_KEY_STORAGE_KEY, key);
+  } catch {
+    // ignore
+  }
+};

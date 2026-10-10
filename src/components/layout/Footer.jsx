@@ -129,6 +129,9 @@ const Footer = () => {
           <FooterLink href={TIP_JAR_URL} isExternal>
             ☕ Tip jar <ExternalLinkIcon boxSize={3} />
           </FooterLink>
+          <FooterLink href="/settings">
+            ⚙️ Settings
+          </FooterLink>
           <Text fontSize="sm" opacity={0.5}>
             MIT licensed — fork it, run your own relay.
           </Text>

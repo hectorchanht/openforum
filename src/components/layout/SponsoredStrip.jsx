@@ -1,7 +1,11 @@
-import { CloseIcon } from "@chakra-ui/icons";
-import { Box, Button, IconButton, Text } from "@chakra-ui/react";
+import { Box, Button, Text } from "@chakra-ui/react";
 import React from "react";
-import { STORAGE_KEY, tipJar, visibleReferralLinks } from "../../libs/sponsored";
+import {
+  SPONSORED_HIDE_EVENT,
+  isSponsoredHidden,
+  tipJar,
+  visibleReferralLinks,
+} from "../../libs/sponsored";
 
 const pillProps = {
   size: "xs",
@@ -16,34 +20,31 @@ const pillProps = {
 // - horizontally scrollable on narrow screens (hidden scrollbar)
 // - tip jar first (Hector's own product: rel="noopener" only)
 // - referral pills after (rel="noopener sponsored")
-// - subtle × at the end: honor-system "hide for tippers", persisted in
-//   localStorage. No restore UI.
+// - V2: the old honor-system × is gone. The strip renders nothing while
+//   localStorage dawn_sponsored_hidden === "1"; the flag is only ever set
+//   by Settings after a real Gumroad license-key verification (or cleared
+//   by "Show again"). It stays in sync same-tab via SPONSORED_HIDE_EVENT
+//   and cross-tab via the native "storage" event.
 // Hydration-safe: localStorage is read inside useEffect; the strip renders
 // identically on server and first client render, then hides on mount if
-// the user dismissed it before.
+// the flag is set.
 const SponsoredStrip = () => {
   const [hidden, setHidden] = React.useState(false);
 
   React.useEffect(() => {
-    try {
-      if (localStorage.getItem(STORAGE_KEY) === "1") setHidden(true);
-    } catch {
-      // storage unavailable (private mode etc.) — strip just stays visible
-    }
+    const sync = () => setHidden(isSponsoredHidden());
+    sync();
+    window.addEventListener(SPONSORED_HIDE_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(SPONSORED_HIDE_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const jar = tipJar();
   const referrals = visibleReferralLinks();
   if (hidden || (!jar.url && referrals.length === 0)) return null;
-
-  const dismiss = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      // ignore
-    }
-    setHidden(true);
-  };
 
   return (
     <Box
@@ -98,18 +99,6 @@ const SponsoredStrip = () => {
           {label}
         </Button>
       ))}
-
-      <IconButton
-        aria-label="Hide sponsored strip"
-        title="Tipped? Hide the sponsored strip"
-        icon={<CloseIcon boxSize={2.5} />}
-        size="xs"
-        variant="ghost"
-        opacity={0.4}
-        _hover={{ opacity: 0.9 }}
-        onClick={dismiss}
-        flexShrink={0}
-      />
     </Box>
   );
 };
