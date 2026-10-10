@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import React from "react";
 import gun from "../../libs/gun";
 import { useFocus, useRelayOfflineConfirmed } from "../../libs/hooks";
+import { track } from "../../libs/analytics";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
 import Logo, { LogoMark } from "../Logo";
 import ThoughtHeapButton from "../ThoughtHeap";
@@ -50,7 +51,11 @@ const Header = () => {
     setInputUsernameFocus();
   }, [setInputUsernameFocus]);
 
-  const setThread = () => setThreadIdAtom(username.replace(/ /g, ''));
+  const setThread = () => {
+    // Queue name itself is user content — never sent to analytics.
+    track('queue_joined');
+    setThreadIdAtom(username.replace(/ /g, ''));
+  };
   const exitThread = React.useCallback(() => {
     setThreadIdAtom('');
     setUser(d => ({ ...d, username: '' }));

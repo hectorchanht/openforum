@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import Head from "next/head";
 import React from "react";
+import { track } from "../libs/analytics";
 import Layout from "../components/layout/Layout";
 import {
   getStoredTipKey,
@@ -62,7 +63,10 @@ const SupporterSection = () => {
   // dawn_supporter — backfill the supporter flag so they keep their status.
   React.useEffect(() => {
     const legacy = isSponsoredHidden();
-    if (legacy && !isSupporter()) setSupporter();
+    if (legacy && !isSupporter()) {
+      setSupporter();
+      track('supporter_status_changed', { is_supporter: true });
+    }
     setVerified(isSupporter() || legacy);
     setHideStrip(legacy);
     setKey(getStoredTipKey());
@@ -84,12 +88,16 @@ const SupporterSection = () => {
         setSupporter();
         setStoredTipKey(key.trim());
         setVerified(true);
+        track('tip_verified', { success: true });
+        track('supporter_status_changed', { is_supporter: true });
       } else {
+        track('tip_verified', { success: false });
         setError(
           "That key didn't verify — check the license key in your Gumroad receipt email."
         );
       }
     } catch {
+      track('tip_verified', { success: false });
       setError(
         "That key didn't verify — check the license key in your Gumroad receipt email."
       );
@@ -202,19 +210,24 @@ const SupporterSection = () => {
   );
 };
 
-const Settings = () => (
-  <Layout>
-    <Head>
-      <title>Settings — OpenQ</title>
-      <meta name="description" content="OpenQ settings" />
-    </Head>
-    <VStack align="stretch" spacing={6} mt={2}>
-      <Heading as="h1" size="xl" textStyle="brandGradient">
-        Settings
-      </Heading>
-      <SupporterSection />
-    </VStack>
-  </Layout>
-);
+const Settings = () => {
+  React.useEffect(() => {
+    track('settings_opened');
+  }, []);
+  return (
+    <Layout>
+      <Head>
+        <title>Settings — OpenQ</title>
+        <meta name="description" content="OpenQ settings" />
+      </Head>
+      <VStack align="stretch" spacing={6} mt={2}>
+        <Heading as="h1" size="xl" textStyle="brandGradient">
+          Settings
+        </Heading>
+        <SupporterSection />
+      </VStack>
+    </Layout>
+  );
+};
 
 export default Settings;

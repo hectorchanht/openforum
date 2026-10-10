@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
+import { track } from "../libs/analytics";
 
 // Scan-to-join: shows a large QR code of the thread URL so an audience can
 // join instantly from their phones. Meant to be screen-shared at events.
@@ -39,7 +40,7 @@ const ShareQR = ({ thread }) => {
 
   return (
     <>
-      <Button size="sm" minH="40px" variant="outline" onClick={onOpen} title="Show a QR code so the audience can join from their phones">
+      <Button size="sm" minH="40px" variant="outline" onClick={() => { track('share_clicked', { source: 'qr_join' }); onOpen(); }} title="Show a QR code so the audience can join from their phones">
         <Box as="span" mr={1}>▦</Box> QR join
       </Button>
 

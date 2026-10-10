@@ -1,5 +1,6 @@
 import { Box, Button, Text } from "@chakra-ui/react";
 import React from "react";
+import { track } from "../../libs/analytics";
 import {
   SPONSORED_HIDE_EVENT,
   isSponsoredHidden,
@@ -78,6 +79,7 @@ const SponsoredStrip = () => {
           bg={jar.bg}
           color={jar.color}
           _hover={{ bg: jar.bg, opacity: 0.85 }}
+          onClick={() => track('tip_jar_opened', { location: 'sponsored_strip' })}
           {...pillProps}
         >
           {jar.label}

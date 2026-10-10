@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { useAtom } from "jotai";
 import React from "react";
 import { timeAgo, uniqueKey } from "../libs/helpers";
+import { track } from "../libs/analytics";
 import {
   createPoll, deletePoll, setPollClosed, usePolls, useThreadMeta, votePoll,
 } from "../libs/hooks";
@@ -127,6 +128,7 @@ const PollCard = ({ thread, poll, isHost, readOnly }) => {
 
   const doVote = (idx) => {
     if (readOnly || poll.closed) return;
+    track('poll_voted', { changed: votedIdx != null });
     votePoll(thread, poll.id, idx);
   };
 

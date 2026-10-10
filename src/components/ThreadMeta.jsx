@@ -1,6 +1,7 @@
 import { Box, Button, HStack, Select, Text, VStack } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import React from "react";
+import { track } from "../libs/analytics";
 import { useThreadMeta } from "../libs/hooks";
 import { threadIdAtom } from "../libs/jotaiAtoms";
 
@@ -51,6 +52,13 @@ const ThreadMeta = () => {
 
   React.useEffect(() => { setDismissed(false); }, [thread]);
 
+  // Key funnel action: someone claimed a room as host.
+  const openQueue = () => {
+    const ttlLabel = (TTL_OPTIONS.find((o) => o.ms === ttl) || {}).label || 'unknown';
+    track('queue_opened', { ttl_label: ttlLabel });
+    createThread(ttl);
+  };
+
   if (!thread) return null;
 
   if (needsCreation && !dismissed) {
@@ -71,7 +79,7 @@ const ThreadMeta = () => {
               <option key={o.label} value={o.ms}>{o.label}</option>
             ))}
           </Select>
-          <Button colorScheme="purple" minH="44px" onClick={() => createThread(ttl)}>
+          <Button colorScheme="purple" minH="44px" onClick={openQueue}>
             Open queue
           </Button>
           <Button variant="ghost" minH="44px" onClick={() => setDismissed(true)}>

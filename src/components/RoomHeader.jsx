@@ -18,6 +18,7 @@ import {
 import { useAtom } from "jotai";
 import React from "react";
 import { avatarFor, downloadCSV, fmtCountdown, pseudonym, timeAgo } from "../libs/helpers";
+import { track } from "../libs/analytics";
 import {
   approvePending,
   countKeys,
@@ -292,10 +293,12 @@ const RoomHeader = () => {
   if (!meta) return null; // uncreated room — nothing to head
 
   const openPresent = () => {
+    track('present_view_opened');
     window.open(`${window.location.origin}/${thread}?present=1`, '_blank', 'noopener');
   };
 
   const exportCSV = () => {
+    track('queue_exported');
     const rows = [
       ['question', 'author', 'votes', 'status', 'flags', 'asked_at'],
       ...posts.map((p) => {
