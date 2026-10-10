@@ -20,11 +20,11 @@ const pillProps = {
 // - horizontally scrollable on narrow screens (hidden scrollbar)
 // - tip jar first (Hector's own product: rel="noopener" only)
 // - referral pills after (rel="noopener sponsored")
-// - V2: the old honor-system × is gone. The strip renders nothing while
-//   localStorage dawn_sponsored_hidden === "1"; the flag is only ever set
-//   by Settings after a real Gumroad license-key verification (or cleared
-//   by "Show again"). It stays in sync same-tab via SPONSORED_HIDE_EVENT
-//   and cross-tab via the native "storage" event.
+// - The old honor-system × is gone. The strip renders nothing ONLY while
+//   localStorage dawn_sponsored_hidden === "1" (the explicit toggle in
+//   Settings); being a supporter (dawn_supporter) does NOT hide the strip.
+//   It stays in sync same-tab via SPONSORED_HIDE_EVENT and cross-tab via
+//   the native "storage" event.
 // Hydration-safe: localStorage is read inside useEffect; the strip renders
 // identically on server and first client render, then hides on mount if
 // the flag is set.

@@ -76,10 +76,11 @@ export const visibleReferralLinks = () =>
 
 export default SPONSORED_LINKS;
 
-// --- V2 hide flow ---------------------------------------------------------
-// The strip renders nothing while the flag is set. The flag is only ever
-// written by Settings after a successful license-key verification (or
-// cleared by "Show again"). The old honor-system × is gone.
+// --- Hide flow ------------------------------------------------------------
+// The strip renders nothing ONLY while dawn_sponsored_hidden === "1". The
+// flag is only ever written by the "Hide sponsored strip" toggle in
+// Settings — verification alone never sets it, and dawn_supporter alone
+// never hides the strip. The old honor-system × is gone.
 //
 // SPONSORED_HIDE_EVENT keeps the strip in sync without a reload: the strip
 // re-reads localStorage whenever the settings page changes the flag in the
@@ -103,6 +104,28 @@ export const setSponsoredHidden = (hidden) => {
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SPONSORED_HIDE_EVENT));
+  }
+};
+
+// --- Supporter status ------------------------------------------------------
+// Set once on a successful license-key verification; never auto-cleared.
+// Being a supporter alone does NOT hide the strip (see hide flow above).
+// For future supporter-gated features — nothing is gated yet.
+export const SUPPORTER_KEY = "dawn_supporter";
+
+export const isSupporter = () => {
+  try {
+    return localStorage.getItem(SUPPORTER_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+export const setSupporter = () => {
+  try {
+    localStorage.setItem(SUPPORTER_KEY, "1");
+  } catch {
+    // ignore
   }
 };
 

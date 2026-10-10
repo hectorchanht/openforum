@@ -7,7 +7,7 @@ import {
   HStack,
   IconButton,
   Input,
-  Link,
+  Switch,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -17,8 +17,10 @@ import Layout from "../components/layout/Layout";
 import {
   getStoredTipKey,
   isSponsoredHidden,
+  isSupporter,
   setSponsoredHidden,
   setStoredTipKey,
+  setSupporter,
 } from "../libs/sponsored";
 
 const VERIFY_ENDPOINT = "/api/verify-tip";
@@ -46,19 +48,23 @@ const copyToClipboard = async (text) => {
   }
 };
 
-const SponsoredStripSection = () => {
+const SupporterSection = () => {
   const [verified, setVerified] = React.useState(false);
+  const [hideStrip, setHideStrip] = React.useState(false);
   const [key, setKey] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState("");
   const [copied, setCopied] = React.useState(false);
 
   // Hydration-safe: localStorage is only read on the client. Whenever a
-  // stored key exists the input comes pre-filled — verified or not, and
-  // after "Show again" (which keeps dawn_tip_license_key and only clears
-  // dawn_sponsored_hidden).
+  // stored key exists the input comes pre-filled. Legacy tippers (verified
+  // under the old auto-hide model) carry dawn_sponsored_hidden but no
+  // dawn_supporter — backfill the supporter flag so they keep their status.
   React.useEffect(() => {
-    setVerified(isSponsoredHidden());
+    const legacy = isSponsoredHidden();
+    if (legacy && !isSupporter()) setSupporter();
+    setVerified(isSupporter() || legacy);
+    setHideStrip(legacy);
     setKey(getStoredTipKey());
   }, []);
 
@@ -73,7 +79,9 @@ const SponsoredStripSection = () => {
       });
       const data = await res.json();
       if (data && data.ok === true) {
-        setSponsoredHidden(true);
+        // Choice model: verifying marks you a supporter — the strip stays
+        // visible unless you flip the toggle below. No auto-hide.
+        setSupporter();
         setStoredTipKey(key.trim());
         setVerified(true);
       } else {
@@ -90,11 +98,10 @@ const SponsoredStripSection = () => {
     }
   };
 
-  const showAgain = () => {
-    // clears ONLY dawn_sponsored_hidden — the key stays stored and the
-    // input stays pre-filled so re-verify is one click
-    setSponsoredHidden(false);
-    setVerified(false);
+  const toggleHideStrip = () => {
+    const next = !hideStrip;
+    setHideStrip(next);
+    setSponsoredHidden(next); // fires SPONSORED_HIDE_EVENT — strip updates live
     setError("");
   };
 
@@ -109,17 +116,39 @@ const SponsoredStripSection = () => {
   return (
     <Box layerStyle="glass" borderRadius="2xl" p={{ base: 4, md: 6 }} w="100%">
       <Heading as="h2" size="md" mb={2}>
-        Sponsored strip
+        Supporter
       </Heading>
       <VStack align="stretch" spacing={3}>
         {verified ? (
-          <Text fontSize="sm" opacity={0.8}>
-            ☕ Thanks for tipping — the sponsored strip is hidden.
-          </Text>
+          <>
+            <Text fontSize="sm" opacity={0.8}>
+              ☕ You're a supporter — thanks for tipping!
+            </Text>
+            <HStack spacing={3} align="center">
+              <Switch
+                id="hide-sponsored-strip"
+                isChecked={hideStrip}
+                onChange={toggleHideStrip}
+                colorScheme="purple"
+              />
+              <Text
+                as="label"
+                htmlFor="hide-sponsored-strip"
+                fontSize="sm"
+                opacity={0.85}
+                cursor="pointer"
+              >
+                Hide sponsored strip
+              </Text>
+            </HStack>
+            <Text fontSize="xs" opacity={0.6} lineHeight="1.5">
+              Supporters can hide the strip anytime.
+            </Text>
+          </>
         ) : (
           <Text fontSize="sm" opacity={0.8} lineHeight="1.6">
             Tipped us on Gumroad? Enter the license key from your purchase
-            receipt email to hide the sponsored strip.
+            receipt email to verify your support.
           </Text>
         )}
         <Text fontSize="xs" opacity={0.6} lineHeight="1.5">
@@ -165,13 +194,8 @@ const SponsoredStripSection = () => {
             isLoading={busy}
             isDisabled={!key.trim() || busy}
           >
-            Verify
+            {verified ? "Verify again" : "Verify"}
           </Button>
-          {verified && (
-            <Link as="button" fontSize="sm" color="purple.300" onClick={showAgain}>
-              Show again
-            </Link>
-          )}
         </HStack>
       </VStack>
     </Box>
@@ -188,7 +212,7 @@ const Settings = () => (
       <Heading as="h1" size="xl" textStyle="brandGradient">
         Settings
       </Heading>
-      <SponsoredStripSection />
+      <SupporterSection />
     </VStack>
   </Layout>
 );
