@@ -23,6 +23,7 @@ const GithubIcon = ({ colorMode, ...props }) => (
 );
 
 const REPO_URL = "https://github.com/hectorchanht/openq";
+const TIP_JAR_URL = "https://dawnlimited.gumroad.com/l/openq-tip";
 
 const copyToClipboard = async (text) => {
   try {
@@ -124,6 +125,9 @@ const Footer = () => {
           </FooterLink>
           <FooterLink href={`${REPO_URL}/issues`} isExternal>
             🐛 Report a bug <ExternalLinkIcon boxSize={3} />
+          </FooterLink>
+          <FooterLink href={TIP_JAR_URL} isExternal>
+            ☕ Tip jar <ExternalLinkIcon boxSize={3} />
           </FooterLink>
           <Text fontSize="sm" opacity={0.5}>
             MIT licensed — fork it, run your own relay.
