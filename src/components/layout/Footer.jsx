@@ -14,6 +14,7 @@ import { useAtom } from "jotai";
 import React from "react";
 import { useRelayOfflineConfirmed } from "../../libs/hooks";
 import { threadIdAtom } from "../../libs/jotaiAtoms";
+import { isSupporter } from "../../libs/sponsored";
 import { LogoMark } from "../Logo";
 
 const GithubIcon = ({ colorMode, ...props }) => (
@@ -57,6 +58,15 @@ const Footer = () => {
   const [thread] = useAtom(threadIdAtom);
   const relayOffline = useRelayOfflineConfirmed();
   const [copied, setCopied] = React.useState(false);
+  // Supporter badge: client-only read (hydration-safe), re-syncs cross-tab.
+  const [supporter, setSupporter] = React.useState(false);
+
+  React.useEffect(() => {
+    const sync = () => setSupporter(isSupporter());
+    sync();
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
 
   const copyThreadLink = async () => {
     if (!thread) return;
@@ -131,6 +141,11 @@ const Footer = () => {
           </FooterLink>
           <FooterLink href="/settings">
             ⚙️ Settings
+            {supporter && (
+              <Text as="span" title="Tip jar supporter" aria-label="Tip jar supporter">
+                ☕
+              </Text>
+            )}
           </FooterLink>
           <Text fontSize="sm" opacity={0.5}>
             MIT licensed — fork it, run your own relay.

@@ -122,7 +122,7 @@ const SupporterSection = () => {
         {verified ? (
           <>
             <Text fontSize="sm" opacity={0.8}>
-              ☕ You're a supporter — thanks for tipping!
+              ☕ You&apos;re a supporter — thanks for tipping!
             </Text>
             <HStack spacing={3} align="center">
               <Switch
